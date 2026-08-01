@@ -1,0 +1,430 @@
+import React, { useState, useEffect } from 'react';
+import { Modal } from '../UI/Modal';
+import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
+import { api } from '../../services/api';
+import { formatCurrency } from '../../utils/formatters';
+import { Plus, Trash2, ShoppingCart, Store, UserCheck } from 'lucide-react';
+
+export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = null }) => {
+  const { user } = useAuth();
+  const { showSuccess, showError } = useToast();
+
+  const [itemsMaster, setItemsMaster] = useState([]);
+  const [recipientUsers, setRecipientUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [orderTo, setOrderTo] = useState('');
+  const [orderFrom, setOrderFrom] = useState('');
+  const [products, setProducts] = useState([
+    { itemId: '', quantity: 1, price: 0, total: 0 },
+  ]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const items = await api.get('/items?activeOnly=true');
+        setItemsMaster(items);
+
+        if (user.role === 'Salesman') {
+          const distributors = await api.get('/users?role=Distributor');
+          setRecipientUsers(distributors);
+          if (distributors.length > 0 && !initialData) {
+            setOrderTo(distributors[0]._id);
+          }
+        } else if (user.role === 'Distributor') {
+          const superStockists = await api.get('/users?role=Super Stockist');
+          setRecipientUsers(superStockists);
+          if (superStockists.length > 0 && !initialData) {
+            setOrderTo(superStockists[0]._id);
+          }
+        } else if (user.role === 'Admin') {
+          const distributors = await api.get('/users?role=Distributor');
+          const superStockists = await api.get('/users?role=Super Stockist');
+          setRecipientUsers([...distributors, ...superStockists]);
+        }
+
+        if (initialData) {
+          setOrderTo(initialData.orderTo?._id || initialData.orderTo || '');
+          setOrderFrom(initialData.orderFrom || '');
+          if (initialData.products && initialData.products.length > 0) {
+            setProducts(
+              initialData.products.map((p) => ({
+                itemId: p.itemId?._id || p.itemId,
+                quantity: p.quantity,
+                price: p.price,
+                total: p.total,
+              }))
+            );
+          }
+        } else {
+          setOrderFrom('');
+          setProducts([{ itemId: items[0]?._id || '', quantity: 1, price: items[0]?.price || 0, total: items[0]?.price || 0 }]);
+        }
+      } catch (err) {
+        showError(err.message || 'Failed to load master data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [isOpen, initialData, user]);
+
+  const handleItemChange = (index, itemId) => {
+    const selectedItem = itemsMaster.find((i) => i._id === itemId);
+    const updated = [...products];
+    const price = selectedItem ? selectedItem.price : 0;
+    const qty = updated[index].quantity || 1;
+
+    updated[index] = {
+      ...updated[index],
+      itemId,
+      price,
+      total: price * qty,
+    };
+    setProducts(updated);
+  };
+
+  const handleQuantityChange = (index, quantity) => {
+    const qty = Math.max(1, parseInt(quantity) || 1);
+    const updated = [...products];
+    const price = updated[index].price || 0;
+
+    updated[index] = {
+      ...updated[index],
+      quantity: qty,
+      total: price * qty,
+    };
+    setProducts(updated);
+  };
+
+  const addProductRow = () => {
+    const defaultItem = itemsMaster[0];
+    const price = defaultItem ? defaultItem.price : 0;
+    setProducts((prev) => [
+      ...prev,
+      {
+        itemId: defaultItem ? defaultItem._id : '',
+        quantity: 1,
+        price,
+        total: price,
+      },
+    ]);
+  };
+
+  const removeProductRow = (index) => {
+    if (products.length === 1) return;
+    setProducts((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const grandTotal = products.reduce((acc, curr) => acc + (curr.total || 0), 0);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!orderFrom.trim()) {
+      showError('Shop Name (Order From) is required');
+      return;
+    }
+
+    if (!orderTo) {
+      showError('Please select a recipient (Order To)');
+      return;
+    }
+
+    if (products.some((p) => !p.itemId)) {
+      showError('Please select a valid product for all rows');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        orderTo,
+        orderFrom,
+        products: products.map((p) => ({
+          itemId: p.itemId,
+          quantity: p.quantity,
+        })),
+      };
+
+      if (initialData) {
+        await api.put(`/orders/${initialData._id}`, payload);
+        showSuccess('Order updated successfully');
+      } else {
+        await api.post('/orders', payload);
+        showSuccess('Order created successfully');
+      }
+
+      onOrderSaved();
+      onClose();
+    } catch (err) {
+      showError(err.message || 'Failed to save order');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={initialData ? `Edit Order #${initialData.orderNumber}` : 'Create New Order'}
+      maxWidth="max-w-3xl"
+    >
+      {loading ? (
+        <div className="flex items-center justify-center py-12" style={{ color: 'var(--c-text-muted)' }}>
+          <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Header Info Banner */}
+          <div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl border"
+            style={{
+              backgroundColor: 'var(--c-bg-elevated)',
+              borderColor: 'var(--c-border)',
+            }}
+          >
+            <div>
+              <label
+                className="block text-xs font-semibold mb-1 flex items-center gap-1.5"
+                style={{ color: 'var(--c-text-muted)' }}
+              >
+                <UserCheck className="w-3.5 h-3.5 text-sky-400" />
+                <span>Salesman Name (Logged In)</span>
+              </label>
+              <input
+                type="text"
+                value={user?.name || ''}
+                readOnly
+                className="w-full rounded-lg px-3 py-1.5 text-sm font-medium border"
+                style={{
+                  backgroundColor: 'var(--c-bg-input)',
+                  borderColor: 'var(--c-border)',
+                  color: 'var(--c-text-secondary)',
+                }}
+              />
+            </div>
+
+            <div>
+              <label
+                className="block text-xs font-semibold mb-1 flex items-center gap-1.5"
+                style={{ color: 'var(--c-text-muted)' }}
+              >
+                <Store className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Order To ({user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'}) *</span>
+              </label>
+              <select
+                value={orderTo}
+                onChange={(e) => setOrderTo(e.target.value)}
+                required
+                className="w-full rounded-lg px-3 py-1.5 text-sm border focus:border-sky-500"
+                style={{
+                  backgroundColor: 'var(--c-bg-input)',
+                  borderColor: 'var(--c-border)',
+                  color: 'var(--c-text-primary)',
+                }}
+              >
+                {recipientUsers.map((u) => (
+                  <option key={u._id} value={u._id}>
+                    {u.name} ({u.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="sm:col-span-2">
+              <label
+                className="block text-xs font-semibold mb-1 flex items-center gap-1.5"
+                style={{ color: 'var(--c-text-muted)' }}
+              >
+                <Store className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Order From (Shop / Store Name) *</span>
+              </label>
+              <input
+                type="text"
+                value={orderFrom}
+                onChange={(e) => setOrderFrom(e.target.value)}
+                placeholder="e.g. Apex Supermarket, Main Street"
+                required
+                className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500"
+                style={{
+                  backgroundColor: 'var(--c-bg-input)',
+                  borderColor: 'var(--c-border)',
+                  color: 'var(--c-text-primary)',
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Products List Section */}
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4
+                className="text-sm font-bold flex items-center gap-2"
+                style={{ color: 'var(--c-text-primary)' }}
+              >
+                <ShoppingCart className="w-4 h-4 text-sky-400" />
+                <span>Order Items</span>
+              </h4>
+              <button
+                type="button"
+                onClick={addProductRow}
+                className="flex items-center gap-1 px-3 py-1 text-xs font-semibold text-sky-400 bg-sky-500/10 hover:bg-sky-500/20 border border-sky-500/30 rounded-lg transition-colors"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Add Item</span>
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {products.map((prod, idx) => (
+                <div
+                  key={idx}
+                  className="grid grid-cols-12 gap-2 items-center p-3 rounded-xl border"
+                  style={{
+                    backgroundColor: 'var(--c-bg-surface)',
+                    borderColor: 'var(--c-border)',
+                  }}
+                >
+                  <div className="col-span-12 sm:col-span-5">
+                    <label
+                      className="block text-[11px] mb-1 sm:hidden"
+                      style={{ color: 'var(--c-text-muted)' }}
+                    >
+                      Product
+                    </label>
+                    <select
+                      value={prod.itemId}
+                      onChange={(e) => handleItemChange(idx, e.target.value)}
+                      required
+                      className="w-full rounded-lg px-2.5 py-1.5 text-xs border focus:border-sky-500"
+                      style={{
+                        backgroundColor: 'var(--c-bg-input)',
+                        borderColor: 'var(--c-border)',
+                        color: 'var(--c-text-primary)',
+                      }}
+                    >
+                      <option value="">Select Item</option>
+                      {itemsMaster.map((i) => (
+                        <option key={i._id} value={i._id}>
+                          {i.itemName} ({formatCurrency(i.price)})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="col-span-4 sm:col-span-2">
+                    <label
+                      className="block text-[11px] mb-1 sm:hidden"
+                      style={{ color: 'var(--c-text-muted)' }}
+                    >
+                      Qty
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={prod.quantity}
+                      onChange={(e) => handleQuantityChange(idx, e.target.value)}
+                      required
+                      className="w-full rounded-lg px-2 py-1.5 text-xs text-center border focus:border-sky-500"
+                      style={{
+                        backgroundColor: 'var(--c-bg-input)',
+                        borderColor: 'var(--c-border)',
+                        color: 'var(--c-text-primary)',
+                      }}
+                    />
+                  </div>
+
+                  <div className="col-span-4 sm:col-span-2">
+                    <label
+                      className="block text-[11px] mb-1 sm:hidden"
+                      style={{ color: 'var(--c-text-muted)' }}
+                    >
+                      Price
+                    </label>
+                    <div
+                      className="rounded-lg px-2 py-1.5 text-xs text-center font-medium border"
+                      style={{
+                        backgroundColor: 'var(--c-bg-input)',
+                        borderColor: 'var(--c-border)',
+                        color: 'var(--c-text-secondary)',
+                      }}
+                    >
+                      {formatCurrency(prod.price)}
+                    </div>
+                  </div>
+
+                  <div className="col-span-3 sm:col-span-2 text-right">
+                    <label
+                      className="block text-[11px] mb-1 sm:hidden"
+                      style={{ color: 'var(--c-text-muted)' }}
+                    >
+                      Total
+                    </label>
+                    <div className="text-xs font-bold text-sky-400">
+                      {formatCurrency(prod.total)}
+                    </div>
+                  </div>
+
+                  <div className="col-span-1 text-center">
+                    <button
+                      type="button"
+                      onClick={() => removeProductRow(idx)}
+                      disabled={products.length === 1}
+                      className="p-1 transition-colors hover:text-rose-400 disabled:opacity-30"
+                      style={{ color: 'var(--c-text-muted)' }}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Grand Total Footer */}
+          <div className="flex items-center justify-between p-4 rounded-xl bg-sky-950/20 border border-sky-500/30">
+            <span
+              className="text-sm font-bold"
+              style={{ color: 'var(--c-text-secondary)' }}
+            >
+              Grand Total
+            </span>
+            <span className="text-xl font-extrabold text-sky-400 tracking-tight">
+              {formatCurrency(grandTotal)}
+            </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+              style={{
+                backgroundColor: 'var(--c-bg-elevated)',
+                color: 'var(--c-text-secondary)',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-6 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 transition-all shadow-lg shadow-sky-500/20 disabled:opacity-50"
+            >
+              {submitting ? 'Saving...' : initialData ? 'Update Order' : 'Create Order'}
+            </button>
+          </div>
+        </form>
+      )}
+    </Modal>
+  );
+};
