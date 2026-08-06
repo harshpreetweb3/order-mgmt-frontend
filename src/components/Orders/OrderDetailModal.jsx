@@ -14,10 +14,12 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
 
   if (!order) return null;
 
+  const isRecipient =
+    order.orderTo?._id === user._id || order.orderTo === user._id;
+
   const canMarkDelivered =
-    (user.role === 'Distributor' && order.status === 'Pending') ||
-    (user.role === 'Super Stockist' && order.status === 'Pending') ||
-    user.role === 'Admin';
+    (user.role === 'Admin' && order.status === 'Pending') ||
+    (isRecipient && (user.role === 'Distributor' || user.role === 'Super Stockist') && order.status === 'Pending');
 
   const handleToggleDelivery = async () => {
     setUpdating(true);

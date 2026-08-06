@@ -23,6 +23,7 @@ import { SentOrders } from './pages/Distributor/SentOrders';
 // Super Stockist Pages
 import { SuperStockistDashboard } from './pages/SuperStockist/SuperStockistDashboard';
 import { SuperStockistOrders } from './pages/SuperStockist/SuperStockistOrders';
+import { SuperStockistSentOrders } from './pages/SuperStockist/SuperStockistSentOrders';
 
 // Admin Pages
 import { AdminDashboard } from './pages/Admin/AdminDashboard';
@@ -193,6 +194,16 @@ export default function App() {
           <ProtectedRoute allowedRoles={['Super Stockist']}>
             <DashboardLayout>
               <SuperStockistOrders />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/super-stockist/orders-sent"
+        element={
+          <ProtectedRoute allowedRoles={['Super Stockist']}>
+            <DashboardLayout>
+              <SuperStockistSentOrders />
             </DashboardLayout>
           </ProtectedRoute>
         }

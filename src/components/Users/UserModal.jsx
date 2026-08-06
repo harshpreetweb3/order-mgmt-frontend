@@ -8,44 +8,54 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
 
+  if (user?.role !== 'Admin') return null;
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState(user.role === 'Distributor' ? 'Salesman' : 'Distributor');
+  const [role, setRole] = useState('Salesman');
   const [status, setStatus] = useState('Active');
+  const [distributorId, setDistributorId] = useState('');
   const [superStockistId, setSuperStockistId] = useState('');
+  const [distributors, setDistributors] = useState([]);
   const [superStockists, setSuperStockists] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isOpen) return;
 
-    const fetchSS = async () => {
+    const fetchMasterLists = async () => {
       if (user.role === 'Admin') {
         try {
-          const list = await api.get('/users?role=Super Stockist');
-          setSuperStockists(list);
+          const [ssList, distList] = await Promise.all([
+            api.get('/users?role=Super Stockist'),
+            api.get('/users?role=Distributor'),
+          ]);
+          setSuperStockists(ssList);
+          setDistributors(distList);
         } catch (err) {
           console.error(err);
         }
       }
     };
 
-    fetchSS();
+    fetchMasterLists();
 
     if (initialData) {
       setName(initialData.name || '');
       setEmail(initialData.email || '');
-      setRole(initialData.role || 'Distributor');
+      setRole(initialData.role || 'Salesman');
       setStatus(initialData.status || 'Active');
+      setDistributorId(initialData.distributorId?._id || initialData.distributorId || '');
       setSuperStockistId(initialData.superStockistId?._id || initialData.superStockistId || '');
       setPassword('');
     } else {
       setName('');
       setEmail('');
       setPassword('');
-      setRole(user.role === 'Distributor' ? 'Salesman' : 'Distributor');
+      setRole('Salesman');
       setStatus('Active');
+      setDistributorId('');
       setSuperStockistId('');
     }
   }, [isOpen, initialData, user]);
@@ -71,7 +81,8 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
         role,
         status,
         ...(password ? { password } : {}),
-        ...(superStockistId ? { superStockistId } : {}),
+        ...(role === 'Salesman' ? { distributorId: distributorId || null } : {}),
+        ...(role === 'Distributor' ? { superStockistId: superStockistId || null } : {}),
       };
 
       if (initialData) {
@@ -162,15 +173,38 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
               className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
               style={inputStyle}
             >
+              <option value="Salesman">Salesman</option>
               <option value="Distributor">Distributor</option>
               <option value="Super Stockist">Super Stockist</option>
-              <option value="Salesman">Salesman</option>
               <option value="Admin">Admin</option>
             </select>
           </div>
         )}
 
-        {user.role === 'Admin' && role === 'Distributor' && superStockists.length > 0 && (
+        {/* Assign Distributor to Salesman */}
+        {user.role === 'Admin' && role === 'Salesman' && (
+          <div>
+            <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
+              Assign Distributor
+            </label>
+            <select
+              value={distributorId}
+              onChange={(e) => setDistributorId(e.target.value)}
+              className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
+              style={inputStyle}
+            >
+              <option value="">None (Unassigned)</option>
+              {distributors.map((d) => (
+                <option key={d._id} value={d._id}>
+                  {d.name} ({d.email})
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Assign Super Stockist to Distributor */}
+        {user.role === 'Admin' && role === 'Distributor' && (
           <div>
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
               Assign Super Stockist

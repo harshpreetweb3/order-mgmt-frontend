@@ -36,7 +36,8 @@ export const MobileNav = () => {
       case 'Super Stockist':
         return [
           { label: 'Dashboard', path: '/super-stockist', icon: LayoutDashboard },
-          { label: 'Orders', path: '/super-stockist/orders', icon: Inbox },
+          { label: 'Received', path: '/super-stockist/orders', icon: Inbox },
+          { label: 'Sent', path: '/super-stockist/orders-sent', icon: Send },
         ];
       case 'Salesman':
       default:

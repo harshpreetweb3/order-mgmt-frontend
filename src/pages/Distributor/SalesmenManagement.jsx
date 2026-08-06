@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Badge } from '../../components/UI/Badge';
-import { UserModal } from '../../components/Users/UserModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { Plus, Users, Mail, CheckCircle2, XCircle } from 'lucide-react';
+import { Mail, Users } from 'lucide-react';
 
 export const SalesmenManagement = () => {
-  const { showSuccess, showError } = useToast();
+  const { showError } = useToast();
   const [salesmen, setSalesmen] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
 
   const fetchSalesmen = async () => {
     setLoading(true);
@@ -29,19 +27,13 @@ export const SalesmenManagement = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">Salesmen Management</h1>
-          <p className="text-sm text-slate-400">Manage field salesmen accounts under your distribution zone</p>
-        </div>
-
-        <button
-          onClick={() => setIsUserModalOpen(true)}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 shadow-lg shadow-sky-500/20 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Register New Salesman</span>
-        </button>
+      <div>
+        <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
+          Salesmen Directory
+        </h1>
+        <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
+          Field salesmen assigned to your distribution zone by Admin
+        </p>
       </div>
 
       {/* Salesmen Cards List */}
@@ -51,14 +43,25 @@ export const SalesmenManagement = () => {
             <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
           </div>
         ) : salesmen.length === 0 ? (
-          <div className="col-span-full bg-slate-900/60 border border-slate-800 rounded-2xl p-12 text-center text-slate-500">
-            No salesmen registered yet. Click 'Register New Salesman' above to add one.
+          <div
+            className="col-span-full border rounded-2xl p-12 text-center"
+            style={{
+              backgroundColor: 'var(--c-bg-surface)',
+              borderColor: 'var(--c-border)',
+              color: 'var(--c-text-muted)',
+            }}
+          >
+            No salesmen assigned to your distribution zone yet. Admin can assign salesmen to you from the Admin User Management panel.
           </div>
         ) : (
           salesmen.map((salesman) => (
             <div
               key={salesman._id}
-              className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col justify-between"
+              className="border rounded-2xl p-5 shadow-lg flex flex-col justify-between"
+              style={{
+                backgroundColor: 'var(--c-bg-surface)',
+                borderColor: 'var(--c-border)',
+              }}
             >
               <div>
                 <div className="flex items-center justify-between mb-3">
@@ -67,27 +70,29 @@ export const SalesmenManagement = () => {
                   </div>
                   <Badge status={salesman.status} />
                 </div>
-                <h3 className="text-base font-bold text-white">{salesman.name}</h3>
-                <p className="text-xs text-slate-400 flex items-center gap-1.5 mt-1">
+                <h3 className="text-base font-bold" style={{ color: 'var(--c-text-primary)' }}>
+                  {salesman.name}
+                </h3>
+                <p className="text-xs flex items-center gap-1.5 mt-1" style={{ color: 'var(--c-text-muted)' }}>
                   <Mail className="w-3.5 h-3.5 text-sky-400" />
                   <span>{salesman.email}</span>
                 </p>
               </div>
 
-              <div className="mt-4 pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-500">
+              <div
+                className="mt-4 pt-3 border-t flex items-center justify-between text-xs"
+                style={{
+                  borderColor: 'var(--c-border)',
+                  color: 'var(--c-text-muted)',
+                }}
+              >
                 <span>Role: Salesman</span>
-                <span className="text-slate-400">Assigned to You</span>
+                <span className="font-semibold text-emerald-500">Assigned to You</span>
               </div>
             </div>
           ))
         )}
       </div>
-
-      <UserModal
-        isOpen={isUserModalOpen}
-        onClose={() => setIsUserModalOpen(false)}
-        onUserSaved={fetchSalesmen}
-      />
     </div>
   );
 };

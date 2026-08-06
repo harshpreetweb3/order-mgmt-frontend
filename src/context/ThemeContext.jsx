@@ -4,7 +4,7 @@ const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('orderflow_theme') || 'dark';
+    return localStorage.getItem('orderflow_theme') || 'light';
   });
 
   useEffect(() => {

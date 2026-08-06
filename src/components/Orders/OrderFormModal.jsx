@@ -42,6 +42,12 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
           if (superStockists.length > 0 && !initialData) {
             setOrderTo(superStockists[0]._id);
           }
+        } else if (user.role === 'Super Stockist') {
+          const admins = await api.get('/users?role=Admin');
+          setRecipientUsers(admins);
+          if (admins.length > 0 && !initialData) {
+            setOrderTo(admins[0]._id);
+          }
         } else if (user.role === 'Admin') {
           const distributors = await api.get('/users?role=Distributor');
           const superStockists = await api.get('/users?role=Super Stockist');
@@ -191,31 +197,22 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
               borderColor: 'var(--c-border)',
             }}
           >
-            {/* Salesman name — only shown for Salesman role */}
+            {/* Salesman banner */}
             {user.role === 'Salesman' && (
-              <div>
-                <label
-                  className="block text-xs font-semibold mb-1 flex items-center gap-1.5"
-                  style={{ color: 'var(--c-text-muted)' }}
-                >
-                  <UserCheck className="w-3.5 h-3.5 text-sky-400" />
-                  <span>Salesman Name (Logged In)</span>
-                </label>
-                <input
-                  type="text"
-                  value={user?.name || ''}
-                  readOnly
-                  className="w-full rounded-lg px-3 py-1.5 text-sm font-medium border"
-                  style={{
-                    backgroundColor: 'var(--c-bg-input)',
-                    borderColor: 'var(--c-border)',
-                    color: 'var(--c-text-secondary)',
-                  }}
-                />
+              <div className="sm:col-span-2 flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <UserCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold" style={{ color: 'var(--c-text-primary)' }}>
+                    Ordering as: <span className="text-emerald-400">{user.name}</span>
+                  </p>
+                  <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
+                    This order will be sent directly to the selected Distributor
+                  </p>
+                </div>
               </div>
             )}
 
-            {/* Distributor banner — shown instead for Distributor role */}
+            {/* Distributor banner */}
             {user.role === 'Distributor' && (
               <div className="sm:col-span-2 flex items-center gap-3 px-3 py-2 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
                 <UserCheck className="w-4 h-4 text-indigo-400 shrink-0" />
@@ -230,14 +227,29 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
               </div>
             )}
 
-            <div className={user.role === 'Distributor' ? 'sm:col-span-2' : ''}>
+            {/* Super Stockist banner */}
+            {user.role === 'Super Stockist' && (
+              <div className="sm:col-span-2 flex items-center gap-3 px-3 py-2 rounded-lg bg-sky-500/10 border border-sky-500/20">
+                <UserCheck className="w-4 h-4 text-sky-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold" style={{ color: 'var(--c-text-primary)' }}>
+                    Ordering as: <span className="text-sky-400">{user.name}</span>
+                  </p>
+                  <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
+                    This bulk replenishment order will be sent to Admin for delivery fulfillment
+                  </p>
+                </div>
+              </div>
+            )}
+
+            <div className="sm:col-span-2">
               <label
                 className="block text-xs font-semibold mb-1 flex items-center gap-1.5"
                 style={{ color: 'var(--c-text-muted)' }}
               >
                 <Store className="w-3.5 h-3.5 text-indigo-400" />
                 <span>
-                  Order To ({user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'}) *
+                  Order To ({user.role === 'Salesman' ? 'Distributor' : user.role === 'Distributor' ? 'Super Stockist' : 'Admin'}) *
                 </span>
               </label>
               <select
@@ -251,7 +263,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                   color: 'var(--c-text-primary)',
                 }}
               >
-                <option value="">-- Select {user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'} --</option>
+                <option value="">-- Select {user.role === 'Salesman' ? 'Distributor' : user.role === 'Distributor' ? 'Super Stockist' : 'Admin'} --</option>
                 {recipientUsers.map((u) => (
                   <option key={u._id} value={u._id}>
                     {u.name}
@@ -260,7 +272,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
               </select>
               {recipientUsers.length === 0 && (
                 <p className="text-xs mt-1 text-rose-400">
-                  No {user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'} accounts found. Contact Admin.
+                  No {user.role === 'Salesman' ? 'Distributor' : user.role === 'Distributor' ? 'Super Stockist' : 'Admin'} accounts found. Contact Admin.
                 </p>
               )}
             </div>

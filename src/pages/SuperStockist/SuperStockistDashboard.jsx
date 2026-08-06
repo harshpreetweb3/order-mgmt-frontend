@@ -2,15 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { StatCard } from '../../components/UI/StatCard';
 import { Badge } from '../../components/UI/Badge';
 import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
+import { OrderFormModal } from '../../components/Orders/OrderFormModal';
 import { api } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Inbox, Clock, CheckCircle2, Eye, CheckCircle } from 'lucide-react';
+import { Inbox, Clock, CheckCircle2, Eye, CheckCircle, PlusCircle } from 'lucide-react';
 import { useToast } from '../../context/ToastContext';
 
 export const SuperStockistDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const { showSuccess, showError } = useToast();
 
   const fetchStats = async () => {
@@ -41,9 +43,18 @@ export const SuperStockistDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-white tracking-tight">Super Stockist Dashboard</h1>
-        <p className="text-sm text-slate-400">Process bulk supply orders from regional distributors</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>Super Stockist Dashboard</h1>
+          <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>Process distributor orders & place replenishment orders to Admin</p>
+        </div>
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 shadow-md transition-all self-start sm:self-auto"
+        >
+          <PlusCircle className="w-4 h-4" />
+          <span>Create Order to Admin</span>
+        </button>
       </div>
 
       {loading ? (
@@ -149,6 +160,12 @@ export const SuperStockistDashboard = () => {
         onClose={() => setSelectedOrder(null)}
         order={selectedOrder}
         onStatusChanged={fetchStats}
+      />
+
+      <OrderFormModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onOrderSaved={fetchStats}
       />
     </div>
   );

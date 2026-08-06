@@ -37,6 +37,7 @@ export const Sidebar = () => {
         return [
           { label: 'Dashboard', path: '/super-stockist', icon: LayoutDashboard },
           { label: 'Orders Received', path: '/super-stockist/orders', icon: Inbox },
+          { label: 'Orders to Admin', path: '/super-stockist/orders-sent', icon: Send },
         ];
       case 'Salesman':
       default:

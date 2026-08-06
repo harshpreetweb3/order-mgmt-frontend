@@ -3,7 +3,7 @@ import { Badge } from '../../components/UI/Badge';
 import { UserModal } from '../../components/Users/UserModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
-import { Plus, Users, Search, Edit, Trash2, Power } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Power } from 'lucide-react';
 
 export const UserManagement = () => {
   const { showSuccess, showError } = useToast();
@@ -67,12 +67,22 @@ export const UserManagement = () => {
     return u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || u.role.toLowerCase().includes(s);
   });
 
+  const inputStyle = {
+    backgroundColor: 'var(--c-bg-input)',
+    borderColor: 'var(--c-border)',
+    color: 'var(--c-text-primary)',
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight">User Management</h1>
-          <p className="text-sm text-slate-400">Create, manage, and toggle active status for Distributors, Super Stockists, and Salesmen</p>
+          <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
+            User Management
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
+            Create accounts for Salesmen (assigned to Distributors), Distributors (assigned to Super Stockists), and Super Stockists
+          </p>
         </div>
 
         <button
@@ -80,7 +90,7 @@ export const UserManagement = () => {
             setEditingUser(null);
             setIsModalOpen(true);
           }}
-          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 shadow-lg shadow-sky-500/20 transition-all"
+          className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 shadow-lg shadow-sky-500/20 transition-all self-start sm:self-auto"
         >
           <Plus className="w-4 h-4" />
           <span>Create User Account</span>
@@ -88,15 +98,22 @@ export const UserManagement = () => {
       </div>
 
       {/* Filter Bar */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 shadow-md">
+      <div
+        className="rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-3 shadow-md border"
+        style={{
+          backgroundColor: 'var(--c-bg-surface)',
+          borderColor: 'var(--c-border)',
+        }}
+      >
         <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2" style={{ color: 'var(--c-text-muted)' }} />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search name, email..."
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2 text-sm text-white"
+            className="w-full rounded-xl pl-10 pr-3 py-2 text-sm border focus:outline-none focus:border-sky-500"
+            style={inputStyle}
           />
         </div>
 
@@ -104,7 +121,8 @@ export const UserManagement = () => {
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+            className="w-full rounded-xl px-3 py-2 text-sm border focus:outline-none focus:border-sky-500"
+            style={inputStyle}
           >
             <option value="">All User Roles</option>
             <option value="Admin">Admin</option>
@@ -118,7 +136,8 @@ export const UserManagement = () => {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+            className="w-full rounded-xl px-3 py-2 text-sm border focus:outline-none focus:border-sky-500"
+            style={inputStyle}
           >
             <option value="">All Statuses</option>
             <option value="Active">Active Only</option>
@@ -128,10 +147,16 @@ export const UserManagement = () => {
       </div>
 
       {/* Users Table */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div
+        className="rounded-2xl overflow-hidden shadow-xl border"
+        style={{
+          backgroundColor: 'var(--c-bg-surface)',
+          borderColor: 'var(--c-border)',
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+            <thead style={{ backgroundColor: 'var(--c-bg-elevated)', color: 'var(--c-text-muted)' }}>
               <tr>
                 <th className="p-3 sm:px-4">Name</th>
                 <th className="p-3 sm:px-4">Email</th>
@@ -141,28 +166,28 @@ export const UserManagement = () => {
                 <th className="p-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
+            <tbody className="divide-y" style={{ borderColor: 'var(--c-border)' }}>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-12 text-slate-400">
+                  <td colSpan="6" className="text-center py-12">
                     <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-12 text-slate-500">
+                  <td colSpan="6" className="text-center py-12" style={{ color: 'var(--c-text-muted)' }}>
                     No users match search criteria.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((usr) => (
-                  <tr key={usr._id} className="hover:bg-slate-800/30 transition-colors">
-                    <td className="p-3 sm:px-4 font-bold text-white">{usr.name}</td>
-                    <td className="p-3 sm:px-4 text-slate-300">{usr.email}</td>
+                  <tr key={usr._id} className="transition-colors hover:bg-slate-800/20">
+                    <td className="p-3 sm:px-4 font-bold" style={{ color: 'var(--c-text-primary)' }}>{usr.name}</td>
+                    <td className="p-3 sm:px-4" style={{ color: 'var(--c-text-secondary)' }}>{usr.email}</td>
                     <td className="p-3 sm:px-4">
                       <span className="font-semibold text-sky-400">{usr.role}</span>
                     </td>
-                    <td className="p-3 sm:px-4 text-slate-400">
+                    <td className="p-3 sm:px-4" style={{ color: 'var(--c-text-muted)' }}>
                       {usr.distributorId?.name ? `Dist: ${usr.distributorId.name}` : usr.superStockistId?.name ? `SS: ${usr.superStockistId.name}` : '-'}
                     </td>
                     <td className="p-3 sm:px-4 text-center">

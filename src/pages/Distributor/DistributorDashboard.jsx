@@ -42,15 +42,7 @@ export const DistributorDashboard = () => {
           <p className="text-sm text-slate-400">Manage salesmen orders & supply chain to Super Stockists</p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => setIsUserFormOpen(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 transition-all"
-          >
-            <Users className="w-4 h-4" />
-            <span>Add Salesman</span>
-          </button>
-
+        <div>
           <button
             onClick={() => setIsOrderFormOpen(true)}
             className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 shadow-lg shadow-sky-500/20 transition-all"
@@ -158,12 +150,6 @@ export const DistributorDashboard = () => {
         isOpen={isOrderFormOpen}
         onClose={() => setIsOrderFormOpen(false)}
         onOrderSaved={fetchStats}
-      />
-
-      <UserModal
-        isOpen={isUserFormOpen}
-        onClose={() => setIsUserFormOpen(false)}
-        onUserSaved={fetchStats}
       />
 
       <OrderDetailModal

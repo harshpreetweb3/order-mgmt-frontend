@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { OrderFilterBar } from '../../components/Orders/OrderFilterBar';
 import { Badge } from '../../components/UI/Badge';
 import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
+import { OrderFormModal } from '../../components/Orders/OrderFormModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Eye, CheckCircle } from 'lucide-react';
+import { Eye, PlusCircle } from 'lucide-react';
 
-export const SuperStockistOrders = () => {
-  const { showSuccess, showError } = useToast();
+export const SuperStockistSentOrders = () => {
+  const { showError } = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -18,12 +19,13 @@ export const SuperStockistOrders = () => {
   const [date, setDate] = useState('');
 
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const data = await api.get('/orders', {
-        scope: 'received',
+        scope: 'sent',
         search,
         status,
         date,
@@ -40,25 +42,25 @@ export const SuperStockistOrders = () => {
     fetchOrders();
   }, [search, status, date]);
 
-  const handleMarkDelivered = async (ord) => {
-    try {
-      await api.put(`/orders/${ord._id}/delivery`, { status: 'Delivered' });
-      showSuccess(`Order #${ord.orderNumber} marked as Delivered!`);
-      fetchOrders();
-    } catch (err) {
-      showError(err.message || 'Failed to update order');
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
-          Orders Received
-        </h1>
-        <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
-          View orders placed by distributors and process delivery fulfillment
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
+            Orders to Admin
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
+            Replenishment supply orders sent to Admin for delivery fulfillment
+          </p>
+        </div>
+
+        <button
+          onClick={() => setIsCreateOpen(true)}
+          className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 shadow-md transition-all self-start sm:self-auto"
+        >
+          <PlusCircle className="w-4 h-4" />
+          <span>Create New Order</span>
+        </button>
       </div>
 
       <OrderFilterBar
@@ -88,9 +90,9 @@ export const SuperStockistOrders = () => {
               <tr>
                 <th className="p-3 sm:px-4">Order #</th>
                 <th className="p-3 sm:px-4">Date</th>
-                <th className="p-3 sm:px-4">Distributor Name</th>
+                <th className="p-3 sm:px-4">Recipient (Order To)</th>
                 <th className="p-3 sm:px-4 text-right">Grand Total</th>
-                <th className="p-3 sm:px-4 text-center">Status</th>
+                <th className="p-3 sm:px-4 text-center">Fulfillment Status</th>
                 <th className="p-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
@@ -104,7 +106,7 @@ export const SuperStockistOrders = () => {
               ) : orders.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="text-center py-12" style={{ color: 'var(--c-text-muted)' }}>
-                    No distributor orders received matching your filter criteria.
+                    No orders created yet. Click "Create New Order" above to place an order to Admin.
                   </td>
                 </tr>
               ) : (
@@ -115,7 +117,7 @@ export const SuperStockistOrders = () => {
                       {formatDate(ord.createdAt)}
                     </td>
                     <td className="p-3 sm:px-4 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
-                      {ord.createdBy?.name || 'Distributor'}
+                      {ord.orderTo?.name || 'Admin'}
                     </td>
                     <td className="p-3 sm:px-4 text-right font-bold" style={{ color: 'var(--c-text-primary)' }}>
                       {formatCurrency(ord.grandTotal)}
@@ -124,30 +126,17 @@ export const SuperStockistOrders = () => {
                       <Badge status={ord.status} />
                     </td>
                     <td className="p-3 sm:px-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => setSelectedOrder(ord)}
-                          className="p-1.5 rounded-lg transition-colors"
-                          style={{
-                            backgroundColor: 'var(--c-bg-elevated)',
-                            color: 'var(--c-text-secondary)',
-                          }}
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </button>
-
-                        {ord.status === 'Pending' && (
-                          <button
-                            onClick={() => handleMarkDelivered(ord)}
-                            className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 transition-colors shadow-sm"
-                            title="Mark Delivered"
-                          >
-                            <CheckCircle className="w-3.5 h-3.5" />
-                            <span>Mark Delivered</span>
-                          </button>
-                        )}
-                      </div>
+                      <button
+                        onClick={() => setSelectedOrder(ord)}
+                        className="p-1.5 rounded-lg transition-colors"
+                        style={{
+                          backgroundColor: 'var(--c-bg-elevated)',
+                          color: 'var(--c-text-secondary)',
+                        }}
+                        title="View Details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))
@@ -162,6 +151,12 @@ export const SuperStockistOrders = () => {
         onClose={() => setSelectedOrder(null)}
         order={selectedOrder}
         onStatusChanged={fetchOrders}
+      />
+
+      <OrderFormModal
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        onOrderSaved={fetchOrders}
       />
     </div>
   );
