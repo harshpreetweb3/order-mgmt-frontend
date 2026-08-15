@@ -45,12 +45,9 @@ export const Navbar = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="font-extrabold text-lg text-white tracking-tight">Order Management System</span>
-              {/* <span className="text-[10px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 border border-sky-500/30">
-                PWA
-              </span> */}
+              <span className="font-extrabold text-lg text-white tracking-tight">RGDG Agro India</span>
             </div>
-            <p className="text-[11px] text-slate-400 hidden sm:block">Production Order Management</p>
+            <p className="text-[11px] text-slate-400 hidden sm:block">Order & Supply Management</p>
           </div>
         </div>
 
@@ -92,7 +89,7 @@ export const Navbar = () => {
                 <span className="text-sm font-semibold text-slate-100">{user.name}</span>
                 <span className="text-xs text-slate-400 flex items-center justify-end gap-1">
                   {getRoleIcon(user.role)}
-                  <span>{user.role}</span>
+                  <span>{user.role === 'Admin' ? 'RGDG Agro (Company)' : user.role}</span>
                 </span>
               </div>
 

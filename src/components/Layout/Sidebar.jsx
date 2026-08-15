@@ -21,7 +21,7 @@ export const Sidebar = () => {
     switch (role) {
       case 'Admin':
         return [
-          { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+          { label: 'Company Dashboard', path: '/admin', icon: LayoutDashboard },
           { label: 'User Management', path: '/admin/users', icon: Users },
           { label: 'Items Master', path: '/admin/items', icon: Package },
           { label: 'All Orders', path: '/admin/orders', icon: ShoppingBag },
@@ -31,13 +31,25 @@ export const Sidebar = () => {
           { label: 'Dashboard', path: '/distributor', icon: LayoutDashboard },
           { label: 'Salesmen List', path: '/distributor/salesmen', icon: Users },
           { label: 'Orders Received', path: '/distributor/orders-received', icon: Inbox },
-          { label: 'Orders to SS', path: '/distributor/orders-sent', icon: Send },
+          { label: 'Orders Sent', path: '/distributor/orders-sent', icon: Send },
         ];
       case 'Super Stockist':
         return [
           { label: 'Dashboard', path: '/super-stockist', icon: LayoutDashboard },
           { label: 'Orders Received', path: '/super-stockist/orders', icon: Inbox },
-          { label: 'Orders to Admin', path: '/super-stockist/orders-sent', icon: Send },
+          { label: 'Orders to Company', path: '/super-stockist/orders-sent', icon: Send },
+        ];
+      case 'ASM':
+        return [
+          { label: 'ASM Dashboard', path: '/asm', icon: LayoutDashboard },
+          { label: 'Create Order to SS', path: '/asm/create-order', icon: PlusCircle },
+          { label: 'Distributor Orders', path: '/asm/orders', icon: ShoppingBag },
+        ];
+      case 'ASE':
+        return [
+          { label: 'ASE Dashboard', path: '/ase', icon: LayoutDashboard },
+          { label: 'Create Order to Company', path: '/ase/create-order', icon: PlusCircle },
+          { label: 'SS & Downline Orders', path: '/ase/orders', icon: ShoppingBag },
         ];
       case 'Salesman':
       default:

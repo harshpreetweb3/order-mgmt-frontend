@@ -39,6 +39,18 @@ export const MobileNav = () => {
           { label: 'Received', path: '/super-stockist/orders', icon: Inbox },
           { label: 'Sent', path: '/super-stockist/orders-sent', icon: Send },
         ];
+      case 'ASM':
+        return [
+          { label: 'Dashboard', path: '/asm', icon: LayoutDashboard },
+          { label: 'New Order', path: '/asm/create-order', icon: PlusCircle },
+          { label: 'Orders', path: '/asm/orders', icon: ShoppingBag },
+        ];
+      case 'ASE':
+        return [
+          { label: 'Dashboard', path: '/ase', icon: LayoutDashboard },
+          { label: 'New Order', path: '/ase/create-order', icon: PlusCircle },
+          { label: 'Orders', path: '/ase/orders', icon: ShoppingBag },
+        ];
       case 'Salesman':
       default:
         return [

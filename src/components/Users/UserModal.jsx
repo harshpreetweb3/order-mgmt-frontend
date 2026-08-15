@@ -81,8 +81,8 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
         role,
         status,
         ...(password ? { password } : {}),
-        ...(role === 'Salesman' ? { distributorId: distributorId || null } : {}),
-        ...(role === 'Distributor' ? { superStockistId: superStockistId || null } : {}),
+        ...(role === 'Salesman' || role === 'ASM' ? { distributorId: distributorId || null } : {}),
+        ...(role === 'Distributor' || role === 'ASE' ? { superStockistId: superStockistId || null } : {}),
       };
 
       if (initialData) {
@@ -174,15 +174,17 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
               style={inputStyle}
             >
               <option value="Salesman">Salesman</option>
+              <option value="ASM">ASM (Area Sales Manager)</option>
               <option value="Distributor">Distributor</option>
+              <option value="ASE">ASE (Area Sales Executive)</option>
               <option value="Super Stockist">Super Stockist</option>
-              <option value="Admin">Admin</option>
+              <option value="Admin">Company Admin</option>
             </select>
           </div>
         )}
 
-        {/* Assign Distributor to Salesman */}
-        {user.role === 'Admin' && role === 'Salesman' && (
+        {/* Assign Distributor to Salesman or ASM */}
+        {user.role === 'Admin' && (role === 'Salesman' || role === 'ASM') && (
           <div>
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
               Assign Distributor
@@ -203,8 +205,8 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
           </div>
         )}
 
-        {/* Assign Super Stockist to Distributor */}
-        {user.role === 'Admin' && role === 'Distributor' && (
+        {/* Assign Super Stockist to Distributor or ASE */}
+        {user.role === 'Admin' && (role === 'Distributor' || role === 'ASE') && (
           <div>
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
               Assign Super Stockist

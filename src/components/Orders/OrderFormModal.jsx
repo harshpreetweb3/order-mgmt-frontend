@@ -37,13 +37,17 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
           if (distributors.length > 0 && !initialData) {
             setOrderTo(distributors[0]._id);
           }
-        } else if (user.role === 'Distributor') {
+        } else if (user.role === 'Distributor' || user.role === 'ASM') {
           const superStockists = await api.get('/users?role=Super Stockist');
-          setRecipientUsers(superStockists);
-          if (superStockists.length > 0 && !initialData) {
-            setOrderTo(superStockists[0]._id);
+          const admins = await api.get('/users?role=Admin');
+          // Allow selecting Super Stockist or Company (Admin)
+          const companyOption = admins.length > 0 ? [{ _id: admins[0]._id, name: 'RGDG Agro India (Company)', role: 'Company' }] : [];
+          const combinedRecipients = [...superStockists, ...companyOption];
+          setRecipientUsers(combinedRecipients);
+          if (combinedRecipients.length > 0 && !initialData) {
+            setOrderTo(combinedRecipients[0]._id);
           }
-        } else if (user.role === 'Super Stockist') {
+        } else if (user.role === 'Super Stockist' || user.role === 'ASE') {
           const admins = await api.get('/users?role=Admin');
           setRecipientUsers(admins);
           if (admins.length > 0 && !initialData) {
@@ -226,10 +230,25 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                 <UserCheck className="w-4 h-4 text-indigo-400 shrink-0" />
                 <div>
                   <p className="text-xs font-bold" style={{ color: 'var(--c-text-primary)' }}>
-                    Ordering as: <span className="text-indigo-400">{user.name}</span>
+                    Ordering as: <span className="text-indigo-400">{user.name}</span> (Distributor)
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
-                    This order will be sent directly to the selected Super Stockist
+                    Order will be sent to the selected Super Stockist or RGDG Agro India (Company)
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ASM banner */}
+            {user.role === 'ASM' && (
+              <div className="sm:col-span-2 flex items-center gap-3 px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                <UserCheck className="w-4 h-4 text-purple-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold" style={{ color: 'var(--c-text-primary)' }}>
+                    Ordering as ASM: <span className="text-purple-400">{user.name}</span> (on behalf of Distributor)
+                  </p>
+                  <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
+                    Order will be sent to Super Stockist or RGDG Agro India (Company) at Distributor rates
                   </p>
                 </div>
               </div>
@@ -241,10 +260,25 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                 <UserCheck className="w-4 h-4 text-sky-400 shrink-0" />
                 <div>
                   <p className="text-xs font-bold" style={{ color: 'var(--c-text-primary)' }}>
-                    Ordering as: <span className="text-sky-400">{user.name}</span>
+                    Ordering as: <span className="text-sky-400">{user.name}</span> (Super Stockist)
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
-                    This bulk replenishment order will be sent to Admin for delivery fulfillment
+                    This bulk replenishment order will be sent directly to RGDG Agro India (Company)
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* ASE banner */}
+            {user.role === 'ASE' && (
+              <div className="sm:col-span-2 flex items-center gap-3 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <UserCheck className="w-4 h-4 text-amber-400 shrink-0" />
+                <div>
+                  <p className="text-xs font-bold" style={{ color: 'var(--c-text-primary)' }}>
+                    Ordering as ASE: <span className="text-amber-400">{user.name}</span> (on behalf of Super Stockist)
+                  </p>
+                  <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
+                    This order will be sent directly to RGDG Agro India (Company) at Super Stockist rates
                   </p>
                 </div>
               </div>
@@ -256,9 +290,11 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                 style={{ color: 'var(--c-text-muted)' }}
               >
                 <Store className="w-3.5 h-3.5 text-sky-400" />
-                <span>Order To (Company) *</span>
+                <span>
+                  Order To ({(user.role === 'Super Stockist' || user.role === 'ASE') ? 'Company' : 'Super Stockist / Company'}) *
+                </span>
               </label>
-              {user.role === 'Super Stockist' ? (
+              {(user.role === 'Super Stockist' || user.role === 'ASE') ? (
                 <input
                   type="text"
                   value="RGDG Agro India"
@@ -282,17 +318,17 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                     color: 'var(--c-text-primary)',
                   }}
                 >
-                  <option value="">-- Select {user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'} --</option>
+                  <option value="">-- Select Recipient --</option>
                   {recipientUsers.map((u) => (
                     <option key={u._id} value={u._id}>
-                      {u.name}
+                      {u.name} {u.role ? `(${u.role})` : ''}
                     </option>
                   ))}
                 </select>
               )}
-              {user.role !== 'Super Stockist' && recipientUsers.length === 0 && (
+              {user.role !== 'Super Stockist' && user.role !== 'ASE' && recipientUsers.length === 0 && (
                 <p className="text-xs mt-1 text-rose-400">
-                  No {user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'} accounts found. Contact Admin.
+                  No recipient accounts found. Contact Admin.
                 </p>
               )}
             </div>

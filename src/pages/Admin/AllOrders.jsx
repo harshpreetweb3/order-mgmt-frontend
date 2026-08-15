@@ -5,7 +5,7 @@ import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Eye, Power, CheckCircle, Clock } from 'lucide-react';
+import { Eye, CheckCircle, Clock } from 'lucide-react';
 
 export const AllOrders = () => {
   const { showSuccess, showError } = useToast();
@@ -73,8 +73,12 @@ export const AllOrders = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-extrabold text-white tracking-tight">System Order Management</h1>
-        <p className="text-sm text-slate-400">View and override delivery status for Salesman, Distributor, and Super Stockist orders</p>
+        <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
+          Company System Orders
+        </h1>
+        <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
+          View, manage, and override delivery status across Salesman, Distributor, Super Stockist, ASM, and ASE orders
+        </p>
       </div>
 
       <OrderFilterBar
@@ -99,43 +103,58 @@ export const AllOrders = () => {
         }}
       />
 
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+      <div
+        className="rounded-2xl overflow-hidden shadow-xl border"
+        style={{
+          backgroundColor: 'var(--c-bg-surface)',
+          borderColor: 'var(--c-border)',
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs sm:text-sm">
-            <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
+            <thead style={{ backgroundColor: 'var(--c-bg-elevated)', color: 'var(--c-text-muted)' }}>
               <tr>
                 <th className="p-3 sm:px-4">Order #</th>
                 <th className="p-3 sm:px-4">Date</th>
-                <th className="p-3 sm:px-4">Shop / Depot</th>
-                <th className="p-3 sm:px-4">Creator Role</th>
+                <th className="p-3 sm:px-4">Order Source (Shop / Creator)</th>
+                <th className="p-3 sm:px-4">Order Recipient</th>
                 <th className="p-3 sm:px-4 text-right">Grand Total</th>
                 <th className="p-3 sm:px-4 text-center">Status</th>
                 <th className="p-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
+            <tbody className="divide-y" style={{ borderColor: 'var(--c-border)' }}>
               {loading ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-slate-400">
+                  <td colSpan="7" className="text-center py-12">
                     <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                   </td>
                 </tr>
               ) : orders.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-12 text-slate-500">
+                  <td colSpan="7" className="text-center py-12" style={{ color: 'var(--c-text-muted)' }}>
                     No orders match search criteria.
                   </td>
                 </tr>
               ) : (
                 orders.map((ord) => (
-                  <tr key={ord._id} className="hover:bg-slate-800/30 transition-colors">
+                  <tr key={ord._id} className="transition-colors hover:bg-slate-800/20">
                     <td className="p-3 sm:px-4 font-bold text-sky-400">{ord.orderNumber}</td>
-                    <td className="p-3 sm:px-4 text-slate-300">{formatDate(ord.createdAt)}</td>
-                    <td className="p-3 sm:px-4 font-semibold text-white">{ord.orderFrom}</td>
-                    <td className="p-3 sm:px-4 text-slate-300">
-                      {ord.createdBy?.name || 'User'} ({ord.createdByRole})
+                    <td className="p-3 sm:px-4" style={{ color: 'var(--c-text-secondary)' }}>
+                      {formatDate(ord.createdAt)}
                     </td>
-                    <td className="p-3 sm:px-4 text-right font-bold text-slate-100">
+                    <td className="p-3 sm:px-4">
+                      <div className="font-bold" style={{ color: 'var(--c-text-primary)' }}>
+                        {ord.orderFrom}
+                      </div>
+                      <div className="text-xs" style={{ color: 'var(--c-text-muted)' }}>
+                        by {ord.createdBy?.name || 'User'} ({ord.createdByRole})
+                      </div>
+                    </td>
+                    <td className="p-3 sm:px-4 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
+                      {ord.orderTo?.role === 'Admin' || !ord.orderTo ? 'RGDG Agro India (Company)' : `${ord.orderTo.name} (${ord.orderTo.role})`}
+                    </td>
+                    <td className="p-3 sm:px-4 text-right font-bold" style={{ color: 'var(--c-text-primary)' }}>
                       {formatCurrency(ord.grandTotal)}
                     </td>
                     <td className="p-3 sm:px-4 text-center">
@@ -157,7 +176,11 @@ export const AllOrders = () => {
 
                         <button
                           onClick={() => setSelectedOrder(ord)}
-                          className="p-1.5 rounded-lg bg-slate-800 text-slate-300 hover:text-white transition-colors"
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{
+                            backgroundColor: 'var(--c-bg-elevated)',
+                            color: 'var(--c-text-secondary)',
+                          }}
                           title="View Details"
                         >
                           <Eye className="w-4 h-4" />

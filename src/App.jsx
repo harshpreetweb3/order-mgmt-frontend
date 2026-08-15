@@ -31,6 +31,10 @@ import { UserManagement } from './pages/Admin/UserManagement';
 import { ItemManagement } from './pages/Admin/ItemManagement';
 import { AllOrders } from './pages/Admin/AllOrders';
 
+// ASM & ASE Pages
+import { ASMDashboard } from './pages/ASM/ASMDashboard';
+import { ASEDashboard } from './pages/ASE/ASEDashboard';
+
 // Protected Route Guard
 const ProtectedRoute = ({ children, allowedRoles }) => {
   const { user, loading } = useAuth();
@@ -56,6 +60,10 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
         return <Navigate to="/super-stockist" replace />;
       case 'Distributor':
         return <Navigate to="/distributor" replace />;
+      case 'ASM':
+        return <Navigate to="/asm" replace />;
+      case 'ASE':
+        return <Navigate to="/ase" replace />;
       case 'Salesman':
       default:
         return <Navigate to="/salesman" replace />;
@@ -68,7 +76,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 // Main Layout Wrapper
 const DashboardLayout = ({ children }) => {
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-16 lg:pb-0">
+    <div className="min-h-screen text-slate-100 flex flex-col pb-16 lg:pb-0" style={{ backgroundColor: 'var(--c-bg-base)' }}>
       <Navbar />
       <div className="flex flex-1">
         <Sidebar />
@@ -93,6 +101,10 @@ export default function App() {
         return '/super-stockist';
       case 'Distributor':
         return '/distributor';
+      case 'ASM':
+        return '/asm';
+      case 'ASE':
+        return '/ase';
       case 'Salesman':
       default:
         return '/salesman';
@@ -246,6 +258,69 @@ export default function App() {
           <ProtectedRoute allowedRoles={['Admin']}>
             <DashboardLayout>
               <AllOrders />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      {/* ASM Routes */}
+      <Route
+        path="/asm"
+        element={
+          <ProtectedRoute allowedRoles={['ASM']}>
+            <DashboardLayout>
+              <ASMDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/asm/create-order"
+        element={
+          <ProtectedRoute allowedRoles={['ASM']}>
+            <DashboardLayout>
+              <ASMDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/asm/orders"
+        element={
+          <ProtectedRoute allowedRoles={['ASM']}>
+            <DashboardLayout>
+              <ASMDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ASE Routes */}
+      <Route
+        path="/ase"
+        element={
+          <ProtectedRoute allowedRoles={['ASE']}>
+            <DashboardLayout>
+              <ASEDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ase/create-order"
+        element={
+          <ProtectedRoute allowedRoles={['ASE']}>
+            <DashboardLayout>
+              <ASEDashboard />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/ase/orders"
+        element={
+          <ProtectedRoute allowedRoles={['ASE']}>
+            <DashboardLayout>
+              <ASEDashboard />
             </DashboardLayout>
           </ProtectedRoute>
         }
