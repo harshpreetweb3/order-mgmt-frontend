@@ -1,16 +1,31 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal } from '../UI/Modal';
 import { Badge } from '../UI/Badge';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { CheckCircle, Clock, Printer, Store, UserCheck, ShieldCheck } from 'lucide-react';
+import { CheckCircle, Clock, Printer, Store, UserCheck, ShieldCheck, Trash2, Edit3 } from 'lucide-react';
 
 export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const [updating, setUpdating] = useState(false);
+  const [editableProducts, setEditableProducts] = useState([]);
+
+  useEffect(() => {
+    if (order && order.products) {
+      setEditableProducts(
+        order.products.map((p) => ({
+          itemId: p.itemId?._id || p.itemId,
+          itemName: p.itemName,
+          quantity: p.quantity,
+          price: p.price,
+          total: p.total,
+        }))
+      );
+    }
+  }, [order, isOpen]);
 
   if (!order) return null;
 
@@ -21,12 +36,46 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
     (user.role === 'Admin' && order.status === 'Pending') ||
     (isRecipient && (user.role === 'Distributor' || user.role === 'Super Stockist') && order.status === 'Pending');
 
+  const handleQtyChange = (idx, val) => {
+    const qty = Math.max(1, parseInt(val) || 1);
+    setEditableProducts((prev) => {
+      const copy = [...prev];
+      const price = copy[idx].price;
+      copy[idx] = {
+        ...copy[idx],
+        quantity: qty,
+        total: Math.round(qty * price * 100) / 100,
+      };
+      return copy;
+    });
+  };
+
+  const handleRemoveProduct = (idx) => {
+    if (editableProducts.length <= 1) {
+      showError('An order must contain at least 1 product.');
+      return;
+    }
+    setEditableProducts((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const currentGrandTotal = editableProducts.reduce(
+    (sum, p) => sum + (p.quantity * p.price),
+    0
+  );
+
   const handleToggleDelivery = async () => {
     setUpdating(true);
     try {
       const nextStatus = order.status === 'Pending' ? 'Delivered' : 'Pending';
-      await api.put(`/orders/${order._id}/delivery`, { status: nextStatus });
-      showSuccess(`Order status updated to ${nextStatus}`);
+      const payload = { status: nextStatus };
+
+      // If pending order is being marked delivered by recipient, include modified products list
+      if (order.status === 'Pending' && canMarkDelivered) {
+        payload.products = editableProducts;
+      }
+
+      await api.put(`/orders/${order._id}/delivery`, payload);
+      showSuccess(`Order #${order.orderNumber} marked as ${nextStatus}!`);
       if (onStatusChanged) onStatusChanged();
       onClose();
     } catch (err) {
@@ -38,6 +87,12 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
 
   const handlePrint = () => {
     window.print();
+  };
+
+  const inputStyle = {
+    backgroundColor: 'var(--c-bg-input)',
+    borderColor: 'var(--c-border)',
+    color: 'var(--c-text-primary)',
   };
 
   return (
@@ -131,16 +186,26 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
                 <span>Order Recipient (Order To)</span>
               </div>
               <p className="text-sm font-bold" style={{ color: 'var(--c-text-primary)' }}>
-                {order.orderTo?.name || 'N/A'} ({order.orderTo?.role})
+                {order.orderTo?.role === 'Admin' ? 'RGDG Agro India (Admin)' : `${order.orderTo?.name} (${order.orderTo?.role})`}
               </p>
             </div>
           )}
         </div>
 
+        {/* Fulfillment Notice if editable */}
+        {canMarkDelivered && (
+          <div className="flex items-center gap-2.5 p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs">
+            <Edit3 className="w-4 h-4 shrink-0" />
+            <span>
+              <strong>Fulfillment Edit Mode:</strong> You can adjust product quantities or remove unavailable items before marking this order as delivered.
+            </span>
+          </div>
+        )}
+
         {/* Products Table */}
         <div>
           <h4 className="text-sm font-bold mb-3" style={{ color: 'var(--c-text-primary)' }}>
-            Order Items ({order.products?.length || 0})
+            Order Items ({editableProducts.length})
           </h4>
           <div className="rounded-xl border overflow-hidden" style={{ borderColor: 'var(--c-border)' }}>
             <table className="w-full text-left text-xs">
@@ -150,16 +215,30 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
                   <th className="p-3 text-center">Qty</th>
                   <th className="p-3 text-right">Unit Price</th>
                   <th className="p-3 text-right">Total</th>
+                  {canMarkDelivered && <th className="p-3 text-center">Action</th>}
                 </tr>
               </thead>
               <tbody className="divide-y" style={{ borderColor: 'var(--c-border)' }}>
-                {order.products?.map((prod, idx) => (
+                {editableProducts.map((prod, idx) => (
                   <tr key={idx} style={{ backgroundColor: 'var(--c-bg-surface)' }}>
                     <td className="p-3 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
                       {prod.itemName}
                     </td>
-                    <td className="p-3 text-center font-bold" style={{ color: 'var(--c-text-secondary)' }}>
-                      {prod.quantity}
+                    <td className="p-3 text-center">
+                      {canMarkDelivered ? (
+                        <input
+                          type="number"
+                          min="1"
+                          value={prod.quantity}
+                          onChange={(e) => handleQtyChange(idx, e.target.value)}
+                          className="w-16 px-2 py-1 text-center font-bold border rounded-lg focus:border-sky-500 focus:outline-none"
+                          style={inputStyle}
+                        />
+                      ) : (
+                        <span className="font-bold" style={{ color: 'var(--c-text-secondary)' }}>
+                          {prod.quantity}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3 text-right" style={{ color: 'var(--c-text-secondary)' }}>
                       {formatCurrency(prod.price)}
@@ -167,6 +246,18 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
                     <td className="p-3 text-right font-bold text-sky-400">
                       {formatCurrency(prod.total)}
                     </td>
+                    {canMarkDelivered && (
+                      <td className="p-3 text-center">
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveProduct(idx)}
+                          className="p-1 rounded-lg hover:bg-rose-500/20 text-rose-400 transition-colors"
+                          title="Remove unavailable item"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -179,7 +270,9 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
           <span className="text-base font-bold" style={{ color: 'var(--c-text-secondary)' }}>
             Grand Total
           </span>
-          <span className="text-2xl font-extrabold text-sky-400">{formatCurrency(order.grandTotal)}</span>
+          <span className="text-2xl font-extrabold text-sky-400">
+            {formatCurrency(currentGrandTotal)}
+          </span>
         </div>
 
         {/* Actions Footer */}
@@ -210,7 +303,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
                 {order.status === 'Pending' ? (
                   <>
                     <CheckCircle className="w-4 h-4" />
-                    <span>Mark as Delivered</span>
+                    <span>{updating ? 'Fulfilling...' : 'Save & Mark Delivered'}</span>
                   </>
                 ) : (
                   <>

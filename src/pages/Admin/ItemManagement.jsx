@@ -128,8 +128,16 @@ export const ItemManagement = () => {
                       <span>{item.itemName}</span>
                     </td>
                     <td className="p-3 sm:px-4 text-slate-400 font-mono">{item.sku || 'N/A'}</td>
-                    <td className="p-3 sm:px-4 text-right font-extrabold text-sky-400">
-                      {formatCurrency(item.price)}
+                    <td className="p-3 sm:px-4 text-right">
+                      <div className="font-extrabold text-sky-400">
+                        {formatCurrency(item.price)} <span className="text-[10px] text-slate-400 font-normal">(SS Base)</span>
+                      </div>
+                      <div className="text-[11px] text-indigo-400 font-semibold">
+                        Dist (+8%): {formatCurrency(item.price * 1.08)}
+                      </div>
+                      <div className="text-[11px] text-emerald-400 font-semibold">
+                        Retail (+8%): {formatCurrency(item.price * 1.08 * 1.08)}
+                      </div>
                     </td>
                     <td className="p-3 sm:px-4 text-center">
                       <Badge status={item.active ? 'Active' : 'Inactive'} />

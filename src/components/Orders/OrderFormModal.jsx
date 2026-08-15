@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
+import { calculateRolePrice } from '../../utils/pricing';
 import { Plus, Trash2, ShoppingCart, Store, UserCheck } from 'lucide-react';
 
 export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = null }) => {
@@ -67,12 +68,19 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
               }))
             );
           }
-        } else {
-          setOrderFrom('');
-          setProducts([{ itemId: items[0]?._id || '', quantity: 1, price: items[0]?.price || 0, total: items[0]?.price || 0 }]);
+        } else if (items.length > 0) {
+          const defaultPrice = calculateRolePrice(items[0].price, user.role);
+          setProducts([
+            {
+              itemId: items[0]._id,
+              quantity: 1,
+              price: defaultPrice,
+              total: defaultPrice,
+            },
+          ]);
         }
       } catch (err) {
-        showError(err.message || 'Failed to load master data');
+        showError('Failed to load item master or recipient users');
       } finally {
         setLoading(false);
       }
@@ -84,14 +92,14 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
   const handleItemChange = (index, itemId) => {
     const selectedItem = itemsMaster.find((i) => i._id === itemId);
     const updated = [...products];
-    const price = selectedItem ? selectedItem.price : 0;
+    const price = selectedItem ? calculateRolePrice(selectedItem.price, user.role) : 0;
     const qty = updated[index].quantity || 1;
 
     updated[index] = {
       ...updated[index],
       itemId,
       price,
-      total: price * qty,
+      total: Math.round(price * qty * 100) / 100,
     };
     setProducts(updated);
   };
@@ -104,14 +112,14 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
     updated[index] = {
       ...updated[index],
       quantity: qty,
-      total: price * qty,
+      total: Math.round(price * qty * 100) / 100,
     };
     setProducts(updated);
   };
 
   const addProductRow = () => {
     const defaultItem = itemsMaster[0];
-    const price = defaultItem ? defaultItem.price : 0;
+    const price = defaultItem ? calculateRolePrice(defaultItem.price, user.role) : 0;
     setProducts((prev) => [
       ...prev,
       {
@@ -247,32 +255,44 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                 className="block text-xs font-semibold mb-1 flex items-center gap-1.5"
                 style={{ color: 'var(--c-text-muted)' }}
               >
-                <Store className="w-3.5 h-3.5 text-indigo-400" />
-                <span>
-                  Order To ({user.role === 'Salesman' ? 'Distributor' : user.role === 'Distributor' ? 'Super Stockist' : 'Admin'}) *
-                </span>
+                <Store className="w-3.5 h-3.5 text-sky-400" />
+                <span>Order To (Company) *</span>
               </label>
-              <select
-                value={orderTo}
-                onChange={(e) => setOrderTo(e.target.value)}
-                required
-                className="w-full rounded-lg px-3 py-1.5 text-sm border focus:border-sky-500"
-                style={{
-                  backgroundColor: 'var(--c-bg-input)',
-                  borderColor: 'var(--c-border)',
-                  color: 'var(--c-text-primary)',
-                }}
-              >
-                <option value="">-- Select {user.role === 'Salesman' ? 'Distributor' : user.role === 'Distributor' ? 'Super Stockist' : 'Admin'} --</option>
-                {recipientUsers.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.name}
-                  </option>
-                ))}
-              </select>
-              {recipientUsers.length === 0 && (
+              {user.role === 'Super Stockist' ? (
+                <input
+                  type="text"
+                  value="RGDG Agro India"
+                  readOnly
+                  className="w-full rounded-lg px-3.5 py-2 text-sm font-bold border"
+                  style={{
+                    backgroundColor: 'var(--c-bg-input)',
+                    borderColor: 'var(--c-border)',
+                    color: 'var(--c-text-primary)',
+                  }}
+                />
+              ) : (
+                <select
+                  value={orderTo}
+                  onChange={(e) => setOrderTo(e.target.value)}
+                  required
+                  className="w-full rounded-lg px-3 py-1.5 text-sm border focus:border-sky-500"
+                  style={{
+                    backgroundColor: 'var(--c-bg-input)',
+                    borderColor: 'var(--c-border)',
+                    color: 'var(--c-text-primary)',
+                  }}
+                >
+                  <option value="">-- Select {user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'} --</option>
+                  {recipientUsers.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.name}
+                    </option>
+                  ))}
+                </select>
+              )}
+              {user.role !== 'Super Stockist' && recipientUsers.length === 0 && (
                 <p className="text-xs mt-1 text-rose-400">
-                  No {user.role === 'Salesman' ? 'Distributor' : user.role === 'Distributor' ? 'Super Stockist' : 'Admin'} accounts found. Contact Admin.
+                  No {user.role === 'Salesman' ? 'Distributor' : 'Super Stockist'} accounts found. Contact Admin.
                 </p>
               )}
             </div>

@@ -91,7 +91,7 @@ export const ItemModal = ({ isOpen, onClose, onItemSaved, initialData = null }) 
 
         <div>
           <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
-            Price (₹) *
+            Super Stockist Base Price (₹) *
           </label>
           <input
             type="number"
@@ -100,10 +100,27 @@ export const ItemModal = ({ isOpen, onClose, onItemSaved, initialData = null }) 
             value={price}
             onChange={(e) => setPrice(e.target.value)}
             required
-            placeholder="e.g. 180"
+            placeholder="e.g. 100"
             className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
             style={inputStyle}
           />
+          {price !== '' && !isNaN(Number(price)) && (
+            <div className="mt-2.5 p-3 rounded-xl bg-sky-500/10 border border-sky-500/20 text-xs space-y-1">
+              <span className="font-bold block text-sky-400 mb-1">Calculated Tier Prices (8% Factor):</span>
+              <div className="flex items-center justify-between" style={{ color: 'var(--c-text-secondary)' }}>
+                <span>Super Stockist (SS) Base Price:</span>
+                <strong className="text-sky-400">₹{(Number(price)).toFixed(2)}</strong>
+              </div>
+              <div className="flex items-center justify-between" style={{ color: 'var(--c-text-secondary)' }}>
+                <span>Distributor Price (+8%):</span>
+                <strong className="text-indigo-400">₹{(Number(price) * 1.08).toFixed(2)}</strong>
+              </div>
+              <div className="flex items-center justify-between" style={{ color: 'var(--c-text-secondary)' }}>
+                <span>Retail Shop Price (+8%):</span>
+                <strong className="text-emerald-400">₹{(Number(price) * 1.08 * 1.08).toFixed(2)}</strong>
+              </div>
+            </div>
+          )}
         </div>
 
         <div>
