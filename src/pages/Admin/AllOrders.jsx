@@ -145,14 +145,18 @@ export const AllOrders = () => {
                     </td>
                     <td className="p-3 sm:px-4">
                       <div className="font-bold" style={{ color: 'var(--c-text-primary)' }}>
-                        {ord.orderFrom}
+                        {ord.createdByRole === 'ASM' && ord.distributor?.name
+                          ? ord.distributor.name
+                          : ord.createdByRole === 'ASE' && ord.superStockist?.name
+                          ? ord.superStockist.name
+                          : ord.orderFrom}
                       </div>
                       <div className="text-xs" style={{ color: 'var(--c-text-muted)' }}>
                         by {ord.createdBy?.name || 'User'} ({ord.createdByRole})
                       </div>
                     </td>
                     <td className="p-3 sm:px-4 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
-                      {ord.orderTo?.role === 'Admin' || !ord.orderTo ? 'RGDG Agro India (Company)' : `${ord.orderTo.name} (${ord.orderTo.role})`}
+                      {ord.orderTo?.role === 'Admin' || !ord.orderTo?.name ? 'RGDG Agro India (Company)' : `${ord.orderTo.name} (${ord.orderTo.role})`}
                     </td>
                     <td className="p-3 sm:px-4 text-right font-bold" style={{ color: 'var(--c-text-primary)' }}>
                       {formatCurrency(ord.grandTotal)}

@@ -26,7 +26,6 @@ export const MobileNav = () => {
           { label: 'Users', path: '/admin/users', icon: Users },
           { label: 'Items', path: '/admin/items', icon: Package },
           { label: 'Orders', path: '/admin/orders', icon: ShoppingBag },
-          { label: 'Hierarchy', path: '/admin/hierarchy', icon: Network },
         ];
       case 'Distributor':
         return [

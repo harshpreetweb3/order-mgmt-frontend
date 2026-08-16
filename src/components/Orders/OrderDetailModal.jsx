@@ -150,10 +150,20 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
           >
             <div className="flex items-center gap-2 text-xs font-bold mb-1" style={{ color: 'var(--c-text-muted)' }}>
               <Store className="w-4 h-4 text-sky-400" />
-              <span>Shop Name (Order From)</span>
+              <span>
+                {order.createdByRole === 'ASM'
+                  ? 'Ordering Entity (Distributor)'
+                  : order.createdByRole === 'ASE'
+                  ? 'Ordering Entity (Super Stockist)'
+                  : 'Shop Name (Order From)'}
+              </span>
             </div>
             <p className="text-sm font-bold" style={{ color: 'var(--c-text-primary)' }}>
-              {order.orderFrom}
+              {order.createdByRole === 'ASM' && order.distributor?.name
+                ? order.distributor.name
+                : order.createdByRole === 'ASE' && order.superStockist?.name
+                ? order.superStockist.name
+                : order.orderFrom}
             </p>
           </div>
 
@@ -169,27 +179,27 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
               <span>Order Creator</span>
             </div>
             <p className="text-sm font-bold" style={{ color: 'var(--c-text-primary)' }}>
-              {order.createdBy?.name || 'Unknown'} ({order.createdByRole})
+              {order.createdBy?.name || 'User'} ({order.createdByRole || order.createdBy?.role || 'User'})
             </p>
           </div>
 
-          {order.orderTo && (
-            <div
-              className="p-3.5 rounded-xl border sm:col-span-2"
-              style={{
-                backgroundColor: 'var(--c-bg-surface)',
-                borderColor: 'var(--c-border)',
-              }}
-            >
-              <div className="flex items-center gap-2 text-xs font-bold mb-1" style={{ color: 'var(--c-text-muted)' }}>
-                <ShieldCheck className="w-4 h-4 text-purple-400" />
-                <span>Order Recipient (Order To)</span>
-              </div>
-              <p className="text-sm font-bold" style={{ color: 'var(--c-text-primary)' }}>
-                {order.orderTo?.role === 'Admin' ? 'RGDG Agro India (Admin)' : `${order.orderTo?.name} (${order.orderTo?.role})`}
-              </p>
+          <div
+            className="p-3.5 rounded-xl border sm:col-span-2"
+            style={{
+              backgroundColor: 'var(--c-bg-surface)',
+              borderColor: 'var(--c-border)',
+            }}
+          >
+            <div className="flex items-center gap-2 text-xs font-bold mb-1" style={{ color: 'var(--c-text-muted)' }}>
+              <ShieldCheck className="w-4 h-4 text-purple-400" />
+              <span>Order Recipient (Order To)</span>
             </div>
-          )}
+            <p className="text-sm font-bold" style={{ color: 'var(--c-text-primary)' }}>
+              {order.orderTo?.role === 'Admin' || !order.orderTo?.name
+                ? 'RGDG Agro India (Company)'
+                : `${order.orderTo.name}${order.orderTo.role ? ` (${order.orderTo.role})` : ''}`}
+            </p>
+          </div>
         </div>
 
         {/* Fulfillment Notice if editable */}

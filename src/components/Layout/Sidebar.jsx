@@ -26,7 +26,6 @@ export const Sidebar = () => {
           { label: 'User Management', path: '/admin/users', icon: Users },
           { label: 'Items Master', path: '/admin/items', icon: Package },
           { label: 'All Orders', path: '/admin/orders', icon: ShoppingBag },
-          { label: 'Order Hierarchy', path: '/admin/hierarchy', icon: Network },
         ];
       case 'Distributor':
         return [
