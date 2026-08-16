@@ -30,6 +30,7 @@ import { AdminDashboard } from './pages/Admin/AdminDashboard';
 import { UserManagement } from './pages/Admin/UserManagement';
 import { ItemManagement } from './pages/Admin/ItemManagement';
 import { AllOrders } from './pages/Admin/AllOrders';
+import { HierarchyOrders } from './pages/Admin/HierarchyOrders';
 
 // ASM & ASE Pages
 import { ASMDashboard } from './pages/ASM/ASMDashboard';
@@ -258,6 +259,16 @@ export default function App() {
           <ProtectedRoute allowedRoles={['Admin']}>
             <DashboardLayout>
               <AllOrders />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/hierarchy"
+        element={
+          <ProtectedRoute allowedRoles={['Admin']}>
+            <DashboardLayout>
+              <HierarchyOrders />
             </DashboardLayout>
           </ProtectedRoute>
         }

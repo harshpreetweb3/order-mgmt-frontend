@@ -6,16 +6,17 @@ import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Plus, Eye, ShoppingBag, Clock, CheckCircle, Store, Send } from 'lucide-react';
+import { Plus, Eye, ShoppingBag, Clock, CheckCircle, Send, Edit, Trash2 } from 'lucide-react';
 
 export const ASMDashboard = () => {
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Modals
   const [isOrderFormOpen, setIsOrderFormOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(null);
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -33,6 +34,27 @@ export const ASMDashboard = () => {
     fetchOrders();
   }, []);
 
+  const handleDelete = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this pending order?')) return;
+    try {
+      await api.delete(`/orders/${orderId}`);
+      showSuccess('Order deleted successfully');
+      fetchOrders();
+    } catch (err) {
+      showError(err.message || 'Failed to delete order');
+    }
+  };
+
+  const handleEdit = (ord) => {
+    setEditingOrder(ord);
+    setIsOrderFormOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsOrderFormOpen(false);
+    setEditingOrder(null);
+  };
+
   const totalOrders = orders.length;
   const pendingOrders = orders.filter((o) => o.status === 'Pending').length;
   const deliveredOrders = orders.filter((o) => o.status === 'Delivered').length;
@@ -46,12 +68,15 @@ export const ASMDashboard = () => {
             ASM Panel (Area Sales Manager)
           </h1>
           <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
-            Create orders to Super Stockist / Company on behalf of Distributor and monitor sales network
+            Create orders on behalf of Distributor & monitor salesmen order flow
           </p>
         </div>
 
         <button
-          onClick={() => setIsOrderFormOpen(true)}
+          onClick={() => {
+            setEditingOrder(null);
+            setIsOrderFormOpen(true);
+          }}
           className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 shadow-lg shadow-purple-500/20 transition-all"
         >
           <Plus className="w-4 h-4" />
@@ -59,12 +84,12 @@ export const ASMDashboard = () => {
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard title="Total ASM Orders" value={totalOrders} icon={ShoppingBag} color="sky" />
+        <StatCard title="Total Region Orders" value={totalOrders} icon={ShoppingBag} color="sky" />
         <StatCard title="Pending Fulfillment" value={pendingOrders} icon={Clock} color="amber" />
         <StatCard title="Delivered Orders" value={deliveredOrders} icon={CheckCircle} color="emerald" />
-        <StatCard title="Total Sales Volume" value={formatCurrency(totalVolume)} icon={Send} color="indigo" />
+        <StatCard title="Total Volume" value={formatCurrency(totalVolume)} icon={Send} color="indigo" />
       </div>
 
       {/* Orders Table */}
@@ -76,9 +101,12 @@ export const ASMDashboard = () => {
         }}
       >
         <div className="p-4 border-b flex items-center justify-between" style={{ borderColor: 'var(--c-border)' }}>
-          <h3 className="font-bold text-sm" style={{ color: 'var(--c-text-primary)' }}>
-            Distributor & Salesmen Orders List
+          <h3 className="font-bold text-base" style={{ color: 'var(--c-text-primary)' }}>
+            ASM Regional Orders
           </h3>
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            {orders.length} Total
+          </span>
         </div>
 
         <div className="overflow-x-auto">
@@ -91,7 +119,7 @@ export const ASMDashboard = () => {
                 <th className="p-3 sm:px-4">Recipient</th>
                 <th className="p-3 sm:px-4 text-right">Grand Total</th>
                 <th className="p-3 sm:px-4 text-center">Status</th>
-                <th className="p-3 sm:px-4 text-right">Action</th>
+                <th className="p-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y" style={{ borderColor: 'var(--c-border)' }}>
@@ -132,17 +160,37 @@ export const ASMDashboard = () => {
                       <Badge status={ord.status} />
                     </td>
                     <td className="p-3 sm:px-4 text-right">
-                      <button
-                        onClick={() => setSelectedOrder(ord)}
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{
-                          backgroundColor: 'var(--c-bg-elevated)',
-                          color: 'var(--c-text-secondary)',
-                        }}
-                        title="View Order Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {ord.status === 'Pending' && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(ord)}
+                              className="p-1.5 rounded-lg border text-amber-400 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                              title="Edit Order"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(ord._id)}
+                              className="p-1.5 rounded-lg border text-rose-400 bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                              title="Delete Order"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => setSelectedOrder(ord)}
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{
+                            backgroundColor: 'var(--c-bg-elevated)',
+                            color: 'var(--c-text-secondary)',
+                          }}
+                          title="View Order Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -154,8 +202,9 @@ export const ASMDashboard = () => {
 
       <OrderFormModal
         isOpen={isOrderFormOpen}
-        onClose={() => setIsOrderFormOpen(false)}
+        onClose={handleCloseForm}
         onOrderSaved={fetchOrders}
+        initialData={editingOrder}
       />
 
       <OrderDetailModal

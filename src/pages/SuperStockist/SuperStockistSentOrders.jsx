@@ -6,10 +6,10 @@ import { OrderFormModal } from '../../components/Orders/OrderFormModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Eye, PlusCircle } from 'lucide-react';
+import { Eye, PlusCircle, Edit, Trash2 } from 'lucide-react';
 
 export const SuperStockistSentOrders = () => {
-  const { showError } = useToast();
+  const { showSuccess, showError } = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -19,6 +19,7 @@ export const SuperStockistSentOrders = () => {
   const [date, setDate] = useState('');
 
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [editingOrder, setEditingOrder] = useState(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const fetchOrders = async () => {
@@ -42,20 +43,44 @@ export const SuperStockistSentOrders = () => {
     fetchOrders();
   }, [search, status, date]);
 
+  const handleDelete = async (orderId) => {
+    if (!window.confirm('Are you sure you want to delete this pending order?')) return;
+    try {
+      await api.delete(`/orders/${orderId}`);
+      showSuccess('Order deleted successfully');
+      fetchOrders();
+    } catch (err) {
+      showError(err.message || 'Failed to delete order');
+    }
+  };
+
+  const handleEdit = (ord) => {
+    setEditingOrder(ord);
+    setIsCreateOpen(true);
+  };
+
+  const handleCloseForm = () => {
+    setIsCreateOpen(false);
+    setEditingOrder(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
-            Orders to Admin
+            Orders to RGDG Agro India (Company)
           </h1>
           <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
-            Replenishment supply orders sent to Admin for delivery fulfillment
+            Replenishment supply orders sent to Company Admin for delivery fulfillment
           </p>
         </div>
 
         <button
-          onClick={() => setIsCreateOpen(true)}
+          onClick={() => {
+            setEditingOrder(null);
+            setIsCreateOpen(true);
+          }}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 shadow-md transition-all self-start sm:self-auto"
         >
           <PlusCircle className="w-4 h-4" />
@@ -117,7 +142,7 @@ export const SuperStockistSentOrders = () => {
                       {formatDate(ord.createdAt)}
                     </td>
                     <td className="p-3 sm:px-4 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
-                      {ord.orderTo?.name || 'Admin'}
+                      {ord.orderTo?.name || 'RGDG Agro India'}
                     </td>
                     <td className="p-3 sm:px-4 text-right font-bold" style={{ color: 'var(--c-text-primary)' }}>
                       {formatCurrency(ord.grandTotal)}
@@ -126,17 +151,37 @@ export const SuperStockistSentOrders = () => {
                       <Badge status={ord.status} />
                     </td>
                     <td className="p-3 sm:px-4 text-right">
-                      <button
-                        onClick={() => setSelectedOrder(ord)}
-                        className="p-1.5 rounded-lg transition-colors"
-                        style={{
-                          backgroundColor: 'var(--c-bg-elevated)',
-                          color: 'var(--c-text-secondary)',
-                        }}
-                        title="View Details"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-1.5">
+                        {ord.status === 'Pending' && (
+                          <>
+                            <button
+                              onClick={() => handleEdit(ord)}
+                              className="p-1.5 rounded-lg border text-amber-400 bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20 transition-colors"
+                              title="Edit Order"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(ord._id)}
+                              className="p-1.5 rounded-lg border text-rose-400 bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                              title="Delete Order"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </>
+                        )}
+                        <button
+                          onClick={() => setSelectedOrder(ord)}
+                          className="p-1.5 rounded-lg transition-colors"
+                          style={{
+                            backgroundColor: 'var(--c-bg-elevated)',
+                            color: 'var(--c-text-secondary)',
+                          }}
+                          title="View Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -155,8 +200,9 @@ export const SuperStockistSentOrders = () => {
 
       <OrderFormModal
         isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        onClose={handleCloseForm}
         onOrderSaved={fetchOrders}
+        initialData={editingOrder}
       />
     </div>
   );

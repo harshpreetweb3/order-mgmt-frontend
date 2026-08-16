@@ -411,7 +411,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                       <option value="">Select Item</option>
                       {itemsMaster.map((i) => (
                         <option key={i._id} value={i._id}>
-                          {i.itemName} ({formatCurrency(i.price)})
+                          {i.itemName} ({formatCurrency(calculateRolePrice(i.price, user.role))})
                         </option>
                       ))}
                     </select>

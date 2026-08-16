@@ -8,7 +8,7 @@ export const calculateRolePrice = (basePrice, role) => {
   const price = Number(basePrice) || 0;
   if (role === 'Salesman') {
     return Math.round(price * 1.08 * 1.08 * 100) / 100;
-  } else if (role === 'Distributor') {
+  } else if (role === 'Distributor' || role === 'ASM') {
     return Math.round(price * 1.08 * 100) / 100;
   } else {
     // Super Stockist, Admin
