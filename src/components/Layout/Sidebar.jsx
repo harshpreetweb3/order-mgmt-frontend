@@ -12,7 +12,7 @@ import {
   Network,
   Tag,
   Store,
-} from 'lucide-react';
+  Layers,} from 'lucide-react';
 
 export const Sidebar = () => {
   const { user } = useAuth();
@@ -24,12 +24,13 @@ export const Sidebar = () => {
     switch (role) {
       case 'Admin':
         return [
-          { label: 'Company Dashboard', path: '/admin', icon: LayoutDashboard },
-          { label: 'User Management', path: '/admin/users', icon: Users },
-          { label: 'Brands Master', path: '/admin/brands', icon: Tag },
-          { label: 'Items Master', path: '/admin/items', icon: Package },
-          { label: 'All Orders', path: '/admin/orders', icon: ShoppingBag },
-        ];
+  { label: 'Company Dashboard', path: '/admin', icon: LayoutDashboard },
+  { label: 'User Management', path: '/admin/users', icon: Users },
+  { label: 'Brands Master', path: '/admin/brands', icon: Tag },
+  { label: 'Items Master', path: '/admin/items', icon: Package },
+  { label: 'All Orders', path: '/admin/orders', icon: ShoppingBag },
+  { label: 'Order Hierarchy', path: '/admin/hierarchy', icon: Layers },
+];
       case 'Distributor':
         return [
           { label: 'Dashboard', path: '/distributor', icon: LayoutDashboard },

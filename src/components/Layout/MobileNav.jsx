@@ -12,6 +12,7 @@ import {
   Network,
   Tag,
   Store,
+  Layers,
 } from 'lucide-react';
 
 export const MobileNav = () => {
@@ -23,13 +24,14 @@ export const MobileNav = () => {
   const getNavItems = () => {
     switch (role) {
       case 'Admin':
-        return [
-          { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
-          { label: 'Users', path: '/admin/users', icon: Users },
-          { label: 'Brands', path: '/admin/brands', icon: Tag },
-          { label: 'Items', path: '/admin/items', icon: Package },
-          { label: 'Orders', path: '/admin/orders', icon: ShoppingBag },
-        ];
+    return [
+      { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+      { label: 'Users', path: '/admin/users', icon: Users },
+      { label: 'Brands', path: '/admin/brands', icon: Tag },
+      { label: 'Items', path: '/admin/items', icon: Package },
+      { label: 'Orders', path: '/admin/orders', icon: ShoppingBag },
+      { label: 'Order Hierarchy', path: '/admin/hierarchy', icon: Layers },
+    ];
       case 'Distributor':
         return [
           { label: 'Dashboard', path: '/distributor', icon: LayoutDashboard },

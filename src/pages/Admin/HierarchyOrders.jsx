@@ -135,7 +135,13 @@ export const HierarchyOrders = () => {
         stats: { total: 0, pending: 0, delivered: 0, value: 0 },
       };
 
-      const parentSSId = dist.superStockistId ? dist.superStockistId.toString() : null;
+      // Extract parent SS ID properly (handling populated object or ID string)
+      const parentSSId = dist.superStockistId?._id
+        ? dist.superStockistId._id.toString()
+        : dist.superStockistId
+        ? dist.superStockistId.toString()
+        : null;
+
       if (parentSSId && ssMap.has(parentSSId)) {
         ssMap.get(parentSSId).distributorsMap.set(dist._id.toString(), distNode);
       } else {
@@ -153,7 +159,7 @@ export const HierarchyOrders = () => {
     // Helper to find or create a distributor node if not in map
     const resolveDistributorNode = (distId, distName) => {
       if (!distId) return null;
-      const dIdStr = distId.toString();
+      const dIdStr = (distId?._id || distId).toString();
 
       // Check in SS maps
       for (const ssNode of ssMap.values()) {
@@ -289,6 +295,13 @@ export const HierarchyOrders = () => {
           name: 'Orders to RGDG Agro India',
           type: 'order_group',
           orders: ssNode.ssOrders,
+          children: [
+            {
+              id: `${ssNode.id}_sent_list`,
+              type: 'order_list',
+              orders: ssNode.ssOrders,
+            },
+          ],
           stats: {
             total: ssNode.ssOrders.length,
             pending: ssNode.ssOrders.filter((o) => o.status === 'Pending').length,
@@ -351,6 +364,13 @@ export const HierarchyOrders = () => {
             name: 'Distributor Orders to SS / Company',
             type: 'order_group',
             orders: distNode.distOrders,
+            children: [
+              {
+                id: `${distNode.id}_sent_list`,
+                type: 'order_list',
+                orders: distNode.distOrders,
+              },
+            ],
             stats: {
               total: distNode.distOrders.length,
               pending: distNode.distOrders.filter((o) => o.status === 'Pending').length,
@@ -411,6 +431,13 @@ export const HierarchyOrders = () => {
           name: 'Distributor Direct Orders to Company',
           type: 'order_group',
           orders: distNode.distOrders,
+          children: [
+            {
+              id: `${distNode.id}_sent_list`,
+              type: 'order_list',
+              orders: distNode.distOrders,
+            },
+          ],
           stats: {
             total: distNode.distOrders.length,
             pending: distNode.distOrders.filter((o) => o.status === 'Pending').length,
