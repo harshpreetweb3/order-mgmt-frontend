@@ -17,8 +17,10 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
   const [status, setStatus] = useState('Active');
   const [distributorId, setDistributorId] = useState('');
   const [superStockistId, setSuperStockistId] = useState('');
+  const [assignedBrandIds, setAssignedBrandIds] = useState([]);
   const [distributors, setDistributors] = useState([]);
   const [superStockists, setSuperStockists] = useState([]);
+  const [brandsList, setBrandsList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -27,12 +29,14 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
     const fetchMasterLists = async () => {
       if (user.role === 'Admin') {
         try {
-          const [ssList, distList] = await Promise.all([
+          const [ssList, distList, bList] = await Promise.all([
             api.get('/users?role=Super Stockist'),
             api.get('/users?role=Distributor'),
+            api.get('/brands?activeOnly=true'),
           ]);
           setSuperStockists(ssList);
           setDistributors(distList);
+          setBrandsList(bList);
         } catch (err) {
           console.error(err);
         }
@@ -48,6 +52,9 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
       setStatus(initialData.status || 'Active');
       setDistributorId(initialData.distributorId?._id || initialData.distributorId || '');
       setSuperStockistId(initialData.superStockistId?._id || initialData.superStockistId || '');
+      
+      const bIds = (initialData.assignedBrands || []).map((b) => (b._id ? b._id : b));
+      setAssignedBrandIds(bIds);
       setPassword('');
     } else {
       setName('');
@@ -57,8 +64,15 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
       setStatus('Active');
       setDistributorId('');
       setSuperStockistId('');
+      setAssignedBrandIds([]);
     }
   }, [isOpen, initialData, user]);
+
+  const handleBrandToggle = (brandId) => {
+    setAssignedBrandIds((prev) =>
+      prev.includes(brandId) ? prev.filter((id) => id !== brandId) : [...prev, brandId]
+    );
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,6 +97,7 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
         ...(password ? { password } : {}),
         ...(role === 'Salesman' || role === 'ASM' ? { distributorId: distributorId || null } : {}),
         ...(role === 'Distributor' || role === 'ASE' ? { superStockistId: superStockistId || null } : {}),
+        ...(role === 'Super Stockist' ? { assignedBrands: assignedBrandIds } : {}),
       };
 
       if (initialData) {
@@ -113,7 +128,7 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? `Edit User: ${initialData.name}` : 'Create New User Account'}
-      maxWidth="max-w-md"
+      maxWidth="max-w-xl"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
@@ -124,8 +139,8 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            placeholder="e.g. Ramesh Kumar"
             required
-            placeholder="e.g. Robert Johnson"
             className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
             style={inputStyle}
           />
@@ -133,14 +148,14 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
 
         <div>
           <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
-            Email / Username *
+            Email Address *
           </label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            placeholder="e.g. ramesh@example.com"
             required
-            placeholder="e.g. robert@company.com"
             className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
             style={inputStyle}
           />
@@ -148,15 +163,15 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
 
         <div>
           <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
-            {initialData ? 'New Password (Leave blank to keep unchanged)' : 'Password *'}
+            {initialData ? 'New Password (leave blank to keep current)' : 'Password *'}
           </label>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder={initialData ? '••••••••' : 'Minimum 6 characters'}
             required={!initialData}
             minLength={6}
-            placeholder="••••••••"
             className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
             style={inputStyle}
           />
@@ -165,7 +180,7 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
         {user.role === 'Admin' && (
           <div>
             <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
-              Role *
+              System Role *
             </label>
             <select
               value={role}
@@ -180,6 +195,35 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
               <option value="Super Stockist">Super Stockist</option>
               <option value="Admin">Company Admin</option>
             </select>
+          </div>
+        )}
+
+        {/* Assign Brands to Super Stockist */}
+        {user.role === 'Admin' && role === 'Super Stockist' && (
+          <div>
+            <label className="block text-xs font-semibold mb-1.5" style={{ color: 'var(--c-text-muted)' }}>
+              Authorized Brands for Super Stockist
+            </label>
+            {brandsList.length === 0 ? (
+              <p className="text-xs text-amber-400">No active brands available. Add brands in Brands Master.</p>
+            ) : (
+              <div
+                className="p-3 rounded-xl border max-h-40 overflow-y-auto space-y-2"
+                style={{ backgroundColor: 'var(--c-bg-surface)', borderColor: 'var(--c-border)' }}
+              >
+                {brandsList.map((b) => (
+                  <label key={b._id} className="flex items-center gap-2 text-xs font-medium cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={assignedBrandIds.includes(b._id)}
+                      onChange={() => handleBrandToggle(b._id)}
+                      className="rounded border-slate-700 text-sky-500 focus:ring-sky-500"
+                    />
+                    <span style={{ color: 'var(--c-text-primary)' }}>{b.name}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -259,9 +303,9 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
           <button
             type="submit"
             disabled={submitting}
-            className="px-5 py-2 rounded-xl text-xs font-bold text-white bg-sky-500 hover:bg-sky-400 shadow-md shadow-sky-500/20 disabled:opacity-50"
+            className="px-5 py-2 rounded-xl text-xs font-semibold text-white bg-sky-500 hover:bg-sky-400 disabled:opacity-50 transition-colors"
           >
-            {submitting ? 'Saving...' : initialData ? 'Update Account' : 'Create Account'}
+            {submitting ? 'Saving...' : initialData ? 'Save Changes' : 'Create Account'}
           </button>
         </div>
       </form>

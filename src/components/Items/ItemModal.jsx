@@ -9,19 +9,35 @@ export const ItemModal = ({ isOpen, onClose, onItemSaved, initialData = null }) 
   const [itemName, setItemName] = useState('');
   const [price, setPrice] = useState('');
   const [sku, setSku] = useState('');
+  const [brandId, setBrandId] = useState('');
+  const [brands, setBrands] = useState([]);
   const [active, setActive] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!isOpen) return;
+
+    const fetchBrands = async () => {
+      try {
+        const data = await api.get('/brands?activeOnly=true');
+        setBrands(data);
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchBrands();
+
     if (initialData) {
       setItemName(initialData.itemName || '');
       setPrice(initialData.price || '');
       setSku(initialData.sku || '');
+      setBrandId(initialData.brandId?._id || initialData.brandId || '');
       setActive(initialData.active !== undefined ? initialData.active : true);
     } else {
       setItemName('');
       setPrice('');
       setSku('');
+      setBrandId('');
       setActive(true);
     }
   }, [isOpen, initialData]);
@@ -37,9 +53,10 @@ export const ItemModal = ({ isOpen, onClose, onItemSaved, initialData = null }) 
     setSubmitting(true);
     try {
       const payload = {
-        itemName,
+        itemName: itemName.trim(),
         price: Number(price),
-        sku,
+        sku: sku ? sku.trim() : '',
+        brandId: brandId || null,
         active,
       };
 
@@ -87,6 +104,25 @@ export const ItemModal = ({ isOpen, onClose, onItemSaved, initialData = null }) 
             className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
             style={inputStyle}
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
+            Associated Brand
+          </label>
+          <select
+            value={brandId}
+            onChange={(e) => setBrandId(e.target.value)}
+            className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
+            style={inputStyle}
+          >
+            <option value="">-- No Brand / General --</option>
+            {brands.map((b) => (
+              <option key={b._id} value={b._id}>
+                {b.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

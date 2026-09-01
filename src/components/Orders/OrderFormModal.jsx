@@ -13,6 +13,8 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
 
   const [itemsMaster, setItemsMaster] = useState([]);
   const [recipientUsers, setRecipientUsers] = useState([]);
+  const [shopsList, setShopsList] = useState([]);
+  const [shopId, setShopId] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,10 +34,18 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
         setItemsMaster(items);
 
         if (user.role === 'Salesman') {
-          const distributors = await api.get('/users?role=Distributor');
+          const [distributors, shops] = await Promise.all([
+            api.get('/users?role=Distributor'),
+            api.get('/shops'),
+          ]);
           setRecipientUsers(distributors);
+          setShopsList(shops);
           if (distributors.length > 0 && !initialData) {
             setOrderTo(distributors[0]._id);
+          }
+          if (shops.length > 0 && !initialData) {
+            setShopId(shops[0]._id);
+            setOrderFrom(shops[0].name);
           }
         } else if (user.role === 'Distributor' || user.role === 'ASM') {
           const superStockists = await api.get('/users?role=Super Stockist');
@@ -62,6 +72,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
         if (initialData) {
           setOrderTo(initialData.orderTo?._id || initialData.orderTo || '');
           setOrderFrom(initialData.orderFrom || '');
+          setShopId(initialData.shopId?._id || initialData.shopId || '');
           if (initialData.products && initialData.products.length > 0) {
             setProducts(
               initialData.products.map((p) => ({
@@ -165,6 +176,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
       const payload = {
         orderTo,
         orderFrom,
+        shopId: shopId || null,
         products: products.map((p) => ({
           itemId: p.itemId,
           quantity: p.quantity,
@@ -333,7 +345,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
               )}
             </div>
 
-            {/* Shop Name — only shown for Salesman role */}
+            {/* Shop Selection — shown for Salesman role */}
             {user.role === 'Salesman' && (
               <div className="sm:col-span-2">
                 <label
@@ -341,21 +353,46 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                   style={{ color: 'var(--c-text-muted)' }}
                 >
                   <Store className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Order From (Shop / Store Name) *</span>
+                  <span>Order From (Select Retail Shop) *</span>
                 </label>
-                <input
-                  type="text"
-                  value={orderFrom}
-                  onChange={(e) => setOrderFrom(e.target.value)}
-                  placeholder="e.g. Apex Supermarket, Main Street"
-                  required
-                  className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500"
-                  style={{
-                    backgroundColor: 'var(--c-bg-input)',
-                    borderColor: 'var(--c-border)',
-                    color: 'var(--c-text-primary)',
-                  }}
-                />
+                {shopsList.length > 0 ? (
+                  <select
+                    value={shopId}
+                    onChange={(e) => {
+                      const selected = shopsList.find((s) => s._id === e.target.value);
+                      setShopId(e.target.value);
+                      if (selected) setOrderFrom(selected.name);
+                    }}
+                    required
+                    className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500"
+                    style={{
+                      backgroundColor: 'var(--c-bg-input)',
+                      borderColor: 'var(--c-border)',
+                      color: 'var(--c-text-primary)',
+                    }}
+                  >
+                    <option value="">-- Select Retail Shop --</option>
+                    {shopsList.map((s) => (
+                      <option key={s._id} value={s._id}>
+                        {s.name} {s.ownerName ? `(${s.ownerName})` : ''}
+                      </option>
+                    ))}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    value={orderFrom}
+                    onChange={(e) => setOrderFrom(e.target.value)}
+                    placeholder="Enter Shop Name (e.g. Apex Supermarket)"
+                    required
+                    className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500"
+                    style={{
+                      backgroundColor: 'var(--c-bg-input)',
+                      borderColor: 'var(--c-border)',
+                      color: 'var(--c-text-primary)',
+                    }}
+                  />
+                )}
               </div>
             )}
           </div>

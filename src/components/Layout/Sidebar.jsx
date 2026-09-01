@@ -10,6 +10,8 @@ import {
   Inbox,
   Send,
   Network,
+  Tag,
+  Store,
 } from 'lucide-react';
 
 export const Sidebar = () => {
@@ -24,6 +26,7 @@ export const Sidebar = () => {
         return [
           { label: 'Company Dashboard', path: '/admin', icon: LayoutDashboard },
           { label: 'User Management', path: '/admin/users', icon: Users },
+          { label: 'Brands Master', path: '/admin/brands', icon: Tag },
           { label: 'Items Master', path: '/admin/items', icon: Package },
           { label: 'All Orders', path: '/admin/orders', icon: ShoppingBag },
         ];
@@ -56,6 +59,7 @@ export const Sidebar = () => {
       default:
         return [
           { label: 'Dashboard', path: '/salesman', icon: LayoutDashboard },
+          { label: 'Retail Shops', path: '/salesman/shops', icon: Store },
           { label: 'Create Order', path: '/salesman/create-order', icon: PlusCircle },
           { label: 'My Orders', path: '/salesman/orders', icon: ShoppingBag },
         ];

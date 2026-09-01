@@ -10,6 +10,8 @@ import {
   Inbox,
   Send,
   Network,
+  Tag,
+  Store,
 } from 'lucide-react';
 
 export const MobileNav = () => {
@@ -24,6 +26,7 @@ export const MobileNav = () => {
         return [
           { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
           { label: 'Users', path: '/admin/users', icon: Users },
+          { label: 'Brands', path: '/admin/brands', icon: Tag },
           { label: 'Items', path: '/admin/items', icon: Package },
           { label: 'Orders', path: '/admin/orders', icon: ShoppingBag },
         ];
@@ -56,6 +59,7 @@ export const MobileNav = () => {
       default:
         return [
           { label: 'Dashboard', path: '/salesman', icon: LayoutDashboard },
+          { label: 'Shops', path: '/salesman/shops', icon: Store },
           { label: 'New Order', path: '/salesman/create-order', icon: PlusCircle },
           { label: 'Orders', path: '/salesman/orders', icon: ShoppingBag },
         ];

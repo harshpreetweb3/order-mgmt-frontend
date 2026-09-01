@@ -13,6 +13,7 @@ import { Login } from './pages/Login';
 // Salesman Pages
 import { SalesmanDashboard } from './pages/Salesman/SalesmanDashboard';
 import { MyOrders } from './pages/Salesman/MyOrders';
+import { ShopManagement } from './pages/Salesman/ShopManagement';
 
 // Distributor Pages
 import { DistributorDashboard } from './pages/Distributor/DistributorDashboard';
@@ -28,6 +29,7 @@ import { SuperStockistSentOrders } from './pages/SuperStockist/SuperStockistSent
 // Admin Pages
 import { AdminDashboard } from './pages/Admin/AdminDashboard';
 import { UserManagement } from './pages/Admin/UserManagement';
+import { BrandManagement } from './pages/Admin/BrandManagement';
 import { ItemManagement } from './pages/Admin/ItemManagement';
 import { AllOrders } from './pages/Admin/AllOrders';
 import { HierarchyOrders } from './pages/Admin/HierarchyOrders';
@@ -147,6 +149,16 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/salesman/shops"
+        element={
+          <ProtectedRoute allowedRoles={['Salesman']}>
+            <DashboardLayout>
+              <ShopManagement />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Distributor Routes */}
       <Route
@@ -239,6 +251,16 @@ export default function App() {
           <ProtectedRoute allowedRoles={['Admin']}>
             <DashboardLayout>
               <UserManagement />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin/brands"
+        element={
+          <ProtectedRoute allowedRoles={['Admin']}>
+            <DashboardLayout>
+              <BrandManagement />
             </DashboardLayout>
           </ProtectedRoute>
         }

@@ -101,6 +101,7 @@ export const ItemManagement = () => {
             <thead className="bg-slate-950 text-slate-400 border-b border-slate-800">
               <tr>
                 <th className="p-3 sm:px-4">Product Name</th>
+                <th className="p-3 sm:px-4">Brand</th>
                 <th className="p-3 sm:px-4">SKU</th>
                 <th className="p-3 sm:px-4 text-right">Master Price</th>
                 <th className="p-3 sm:px-4 text-center">Catalog Status</th>
@@ -110,13 +111,13 @@ export const ItemManagement = () => {
             <tbody className="divide-y divide-slate-800/60 bg-slate-900/40">
               {loading ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-slate-400">
+                  <td colSpan="6" className="text-center py-12 text-slate-400">
                     <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                   </td>
                 </tr>
               ) : filteredItems.length === 0 ? (
                 <tr>
-                  <td colSpan="5" className="text-center py-12 text-slate-500">
+                  <td colSpan="6" className="text-center py-12 text-slate-500">
                     No products found.
                   </td>
                 </tr>
@@ -126,6 +127,15 @@ export const ItemManagement = () => {
                     <td className="p-3 sm:px-4 font-bold text-white flex items-center gap-2">
                       <Package className="w-4 h-4 text-sky-400 shrink-0" />
                       <span>{item.itemName}</span>
+                    </td>
+                    <td className="p-3 sm:px-4 text-slate-300">
+                      {item.brandId?.name ? (
+                        <span className="px-2 py-0.5 rounded text-xs font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                          {item.brandId.name}
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 text-xs">Unassigned</span>
+                      )}
                     </td>
                     <td className="p-3 sm:px-4 text-slate-400 font-mono">{item.sku || 'N/A'}</td>
                     <td className="p-3 sm:px-4 text-right">
