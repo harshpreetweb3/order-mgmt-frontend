@@ -16,6 +16,18 @@ export const ItemManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
 
+  const [brands, setBrands] = useState([]);
+  const [selectedBrandId, setSelectedBrandId] = useState('');
+
+  const fetchBrands = async () => {
+    try {
+      const data = await api.get('/brands');
+      setBrands(data);
+    } catch (err) {
+      showError(err.message || 'Failed to fetch brands');
+    }
+  };
+
   const fetchItems = async () => {
     setLoading(true);
     try {
@@ -29,9 +41,35 @@ export const ItemManagement = () => {
   };
 
   useEffect(() => {
+    fetchBrands();
     fetchItems();
   }, []);
 
+  // UI for brand filter
+  const brandFilter = (
+    <div className="ml-4">
+      <select
+        value={selectedBrandId}
+        onChange={(e) => setSelectedBrandId(e.target.value)}
+        className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white"
+      >
+        <option value="">All Brands</option>
+        {brands.map((b) => (
+          <option key={b._id} value={b._id}>
+            {b.name}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+
+  const filteredItems = items.filter((i) => {
+    // Search filter
+    const matchesSearch = !search.trim() || i.itemName.toLowerCase().includes(search.toLowerCase()) || (i.sku && i.sku.toLowerCase().includes(search.toLowerCase()));
+    // Brand filter (for Admin view)
+    const matchesBrand = !selectedBrandId || (i.brandId && i.brandId._id === selectedBrandId);
+    return matchesSearch && matchesBrand;
+  });
   const handleToggleActive = async (item) => {
     try {
       await api.put(`/items/${item._id}`, { active: !item.active });
@@ -54,11 +92,7 @@ export const ItemManagement = () => {
     }
   };
 
-  const filteredItems = items.filter((i) => {
-    if (!search.trim()) return true;
-    const s = search.toLowerCase();
-    return i.itemName.toLowerCase().includes(s) || (i.sku && i.sku.toLowerCase().includes(s));
-  });
+  // The filteredItems variable is already defined above with brand and search filters.
 
   return (
     <div className="space-y-6">
@@ -81,17 +115,20 @@ export const ItemManagement = () => {
       </div>
 
       {/* Search */}
-      <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-md max-w-md">
-        <div className="relative">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search products by name or SKU..."
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2 text-sm text-white"
-          />
+      <div className="flex items-center gap-4">
+        <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-4 shadow-md max-w-md">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search products by name or SKU..."
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-10 pr-3 py-2 text-sm text-white"
+            />
+          </div>
         </div>
+        {brandFilter}
       </div>
 
       {/* Items Table */}
