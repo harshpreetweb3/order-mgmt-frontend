@@ -69,7 +69,7 @@ export const SuperStockistSentOrders = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
-            Orders to RGDG Agro India (Company)
+            Orders to KNK Enterprises (Company)
           </h1>
           <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
             Replenishment supply orders sent to Company Admin for delivery fulfillment
@@ -142,7 +142,7 @@ export const SuperStockistSentOrders = () => {
                       {formatDate(ord.createdAt)}
                     </td>
                     <td className="p-3 sm:px-4 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
-                      {ord.orderTo?.name || 'RGDG Agro India'}
+                      {ord.orderTo?.name || 'KNK Enterprises'}
                     </td>
                     <td className="p-3 sm:px-4 text-right font-bold" style={{ color: 'var(--c-text-primary)' }}>
                       {formatCurrency(ord.grandTotal)}

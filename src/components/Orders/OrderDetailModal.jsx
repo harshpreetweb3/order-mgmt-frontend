@@ -196,7 +196,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
             </div>
             <p className="text-sm font-bold" style={{ color: 'var(--c-text-primary)' }}>
               {order.orderTo?.role === 'Admin' || !order.orderTo?.name
-                ? 'RGDG Agro India (Company)'
+                ? 'KNK Enterprises (Company)'
                 : `${order.orderTo.name}${order.orderTo.role ? ` (${order.orderTo.role})` : ''}`}
             </p>
           </div>

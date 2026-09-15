@@ -292,7 +292,7 @@ export const HierarchyOrders = () => {
       if (ssNode.ssOrders.length > 0) {
         children.push({
           id: `${ssNode.id}_sent`,
-          name: 'Orders to RGDG Agro India',
+          name: 'Orders to KNK Enterprises',
           type: 'order_group',
           orders: ssNode.ssOrders,
           children: [
@@ -477,7 +477,7 @@ export const HierarchyOrders = () => {
 
     return {
       id: 'root',
-      name: 'RGDG Agro India (Company)',
+      name: 'KNK Enterprises (Company)',
       type: 'company',
       stats: rootStats,
       children: rootChildren,

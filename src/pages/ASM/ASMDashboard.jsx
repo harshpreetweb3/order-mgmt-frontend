@@ -151,7 +151,7 @@ export const ASMDashboard = () => {
                       </div>
                     </td>
                     <td className="p-3 sm:px-4 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
-                      {ord.orderTo?.name ? `${ord.orderTo.name} (${ord.orderTo.role})` : 'RGDG Agro India (Company)'}
+                      {ord.orderTo?.name ? `${ord.orderTo.name} (${ord.orderTo.role})` : 'KNK Enterprises (Company)'}
                     </td>
                     <td className="p-3 sm:px-4 text-right font-bold" style={{ color: 'var(--c-text-primary)' }}>
                       {formatCurrency(ord.grandTotal)}

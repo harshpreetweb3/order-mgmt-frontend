@@ -55,7 +55,7 @@ export const BrandManagement = () => {
             Company Brands Master
           </h1>
           <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
-            Create and manage product brands for RGDG Agro India & assign to Super Stockists
+            Create and manage product brands for KNK Enterprises & assign to Super Stockists
           </p>
         </div>
 

@@ -68,7 +68,7 @@ export const ASEDashboard = () => {
             ASE Panel (Area Sales Executive)
           </h1>
           <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
-            Create replenishment orders to RGDG Agro India (Company) on behalf of Super Stockist & view downline orders
+            Create replenishment orders to KNK Enterprises (Company) on behalf of Super Stockist & view downline orders
           </p>
         </div>
 
@@ -80,7 +80,7 @@ export const ASEDashboard = () => {
           className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 shadow-lg shadow-amber-500/20 transition-all"
         >
           <Plus className="w-4 h-4" />
-          <span>Create Order to RGDG Agro (Company)</span>
+          <span>Create Order to KNK Enterprises (Company)</span>
         </button>
       </div>
 
@@ -151,7 +151,7 @@ export const ASEDashboard = () => {
                       </div>
                     </td>
                     <td className="p-3 sm:px-4 font-semibold" style={{ color: 'var(--c-text-primary)' }}>
-                      {ord.orderTo?.name ? `${ord.orderTo.name} (${ord.orderTo.role})` : 'RGDG Agro India (Company)'}
+                      {ord.orderTo?.name ? `${ord.orderTo.name} (${ord.orderTo.role})` : 'KNK Enterprises (Company)'}
                     </td>
                     <td className="p-3 sm:px-4 text-right font-bold" style={{ color: 'var(--c-text-primary)' }}>
                       {formatCurrency(ord.grandTotal)}

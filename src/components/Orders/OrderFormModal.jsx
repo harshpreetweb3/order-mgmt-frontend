@@ -51,7 +51,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
           const superStockists = await api.get('/users?role=Super Stockist');
           const admins = await api.get('/users?role=Admin');
           // Allow selecting Super Stockist or Company (Admin)
-          const companyOption = admins.length > 0 ? [{ _id: admins[0]._id, name: 'RGDG Agro India (Company)', role: 'Company' }] : [];
+          const companyOption = admins.length > 0 ? [{ _id: admins[0]._id, name: 'KNK Enterprises (Company)', role: 'Company' }] : [];
           const combinedRecipients = [...superStockists, ...companyOption];
           setRecipientUsers(combinedRecipients);
           if (combinedRecipients.length > 0 && !initialData) {
@@ -245,7 +245,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                     Ordering as: <span className="text-indigo-400">{user.name}</span> (Distributor)
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
-                    Order will be sent to the selected Super Stockist or RGDG Agro India (Company)
+                    Order will be sent to the selected Super Stockist or KNK Enterprises (Company)
                   </p>
                 </div>
               </div>
@@ -260,7 +260,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                     Ordering as ASM: <span className="text-purple-400">{user.name}</span> (on behalf of Distributor)
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
-                    Order will be sent to Super Stockist or RGDG Agro India (Company) at Distributor rates
+                    Order will be sent to Super Stockist or KNK Enterprises (Company) at Distributor rates
                   </p>
                 </div>
               </div>
@@ -275,7 +275,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                     Ordering as: <span className="text-sky-400">{user.name}</span> (Super Stockist)
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
-                    This bulk replenishment order will be sent directly to RGDG Agro India (Company)
+                    This bulk replenishment order will be sent directly to KNK Enterprises (Company)
                   </p>
                 </div>
               </div>
@@ -290,7 +290,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                     Ordering as ASE: <span className="text-amber-400">{user.name}</span> (on behalf of Super Stockist)
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>
-                    This order will be sent directly to RGDG Agro India (Company) at Super Stockist rates
+                    This order will be sent directly to KNK Enterprises (Company) at Super Stockist rates
                   </p>
                 </div>
               </div>
@@ -309,7 +309,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
               {(user.role === 'Super Stockist' || user.role === 'ASE') ? (
                 <input
                   type="text"
-                  value="RGDG Agro India"
+                  value="KNK Enterprises"
                   readOnly
                   className="w-full rounded-lg px-3.5 py-2 text-sm font-bold border"
                   style={{

@@ -72,7 +72,7 @@ export const BrandModal = ({ isOpen, onClose, onBrandSaved, initialData = null }
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. RGDG Spices, RGDG Grains"
+            placeholder="e.g. KNK Spices, KNK Grains"
             required
             className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500"
             style={{
