@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { StatCard } from '../../components/UI/StatCard';
 import { Badge } from '../../components/UI/Badge';
 import { OrderFormModal } from '../../components/Orders/OrderFormModal';
@@ -6,9 +7,10 @@ import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Plus, Eye, ShoppingBag, Clock, CheckCircle, Send, Edit, Trash2 } from 'lucide-react';
+import { Plus, Eye, ShoppingBag, Clock, CheckCircle, Send, Edit, Trash2, XCircle } from 'lucide-react';
 
 export const ASEDashboard = () => {
+  const location = useLocation();
   const { showSuccess, showError } = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -33,6 +35,24 @@ export const ASEDashboard = () => {
   useEffect(() => {
     fetchOrders();
   }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/ase/create-order') {
+      setEditingOrder(null);
+      setIsOrderFormOpen(true);
+    }
+  }, [location.pathname]);
+
+  const handleCancel = async (id, orderNumber) => {
+    if (!window.confirm(`Are you sure you want to cancel Order #${orderNumber}?`)) return;
+    try {
+      await api.put(`/orders/${id}/cancel`, {});
+      showSuccess(`Order #${orderNumber} cancelled successfully`);
+      fetchOrders();
+    } catch (err) {
+      showError(err.message || 'Failed to cancel order');
+    }
+  };
 
   const handleDelete = async (orderId) => {
     if (!window.confirm('Are you sure you want to delete this pending order?')) return;
@@ -157,7 +177,7 @@ export const ASEDashboard = () => {
                       {formatCurrency(ord.grandTotal)}
                     </td>
                     <td className="p-3 sm:px-4 text-center">
-                      <Badge status={ord.status} />
+                      <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                     </td>
                     <td className="p-3 sm:px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
@@ -171,8 +191,15 @@ export const ASEDashboard = () => {
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDelete(ord._id)}
+                              onClick={() => handleCancel(ord._id, ord.orderNumber)}
                               className="p-1.5 rounded-lg border text-rose-400 bg-rose-500/10 border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                              title="Cancel Order"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(ord._id)}
+                              className="p-1.5 rounded-lg border text-slate-400 bg-slate-800/40 border-slate-700 hover:bg-slate-700 transition-colors"
                               title="Delete Order"
                             >
                               <Trash2 className="w-4 h-4" />

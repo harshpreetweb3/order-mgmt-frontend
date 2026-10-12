@@ -6,7 +6,7 @@ import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Eye, Edit, Trash2, Plus } from 'lucide-react';
+import { Eye, Edit, Trash2, Plus, XCircle } from 'lucide-react';
 
 export const MyOrders = () => {
   const { showSuccess, showError } = useToast();
@@ -42,6 +42,17 @@ export const MyOrders = () => {
   useEffect(() => {
     fetchOrders();
   }, [search, status, date]);
+
+  const handleCancel = async (id, orderNumber) => {
+    if (!window.confirm(`Are you sure you want to cancel Order #${orderNumber}?`)) return;
+    try {
+      await api.put(`/orders/${id}/cancel`, {});
+      showSuccess(`Order #${orderNumber} cancelled successfully`);
+      fetchOrders();
+    } catch (err) {
+      showError(err.message || 'Failed to cancel order');
+    }
+  };
 
   const handleDelete = async (id, orderNumber) => {
     if (!window.confirm(`Are you sure you want to delete Order #${orderNumber}?`)) return;
@@ -131,7 +142,7 @@ export const MyOrders = () => {
                       {formatCurrency(ord.grandTotal)}
                     </td>
                     <td className="p-3 sm:px-4 text-center">
-                      <Badge status={ord.status} />
+                      <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                     </td>
                     <td className="p-3 sm:px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
@@ -154,6 +165,14 @@ export const MyOrders = () => {
                               title="Edit Order"
                             >
                               <Edit className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              onClick={() => handleCancel(ord._id, ord.orderNumber)}
+                              className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                              title="Cancel Order"
+                            >
+                              <XCircle className="w-4 h-4" />
                             </button>
 
                             <button

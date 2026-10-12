@@ -2,10 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { OrderFilterBar } from '../../components/Orders/OrderFilterBar';
 import { Badge } from '../../components/UI/Badge';
 import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
+import { FactoryResetModal } from '../../components/Orders/FactoryResetModal';
 import { api } from '../../services/api';
 import { useToast } from '../../context/ToastContext';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { Eye, CheckCircle, Clock } from 'lucide-react';
+import { Eye, CheckCircle, Clock, XCircle, RotateCcw } from 'lucide-react';
 
 export const AllOrders = () => {
   const { showSuccess, showError } = useToast();
@@ -13,6 +14,7 @@ export const AllOrders = () => {
   const [distributors, setDistributors] = useState([]);
   const [superStockists, setSuperStockists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
   // Filters
   const [search, setSearch] = useState('');
@@ -70,15 +72,39 @@ export const AllOrders = () => {
     }
   };
 
+  const handleAdminCancel = async (ord) => {
+    const reason = window.prompt(
+      `Are you sure you want to cancel Order #${ord.orderNumber} as Admin?\nEnter optional cancellation reason:`
+    );
+    if (reason === null) return;
+    try {
+      await api.put(`/orders/${ord._id}/cancel`, { reason: reason.trim() });
+      showSuccess(`Order #${ord.orderNumber} cancelled by admin`);
+      fetchOrders();
+    } catch (err) {
+      showError(err.message || 'Failed to cancel order');
+    }
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
-          Company System Orders
-        </h1>
-        <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
-          View, manage, and override delivery status across Salesman, Distributor, Super Stockist, ASM, and ASE orders
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold tracking-tight" style={{ color: 'var(--c-text-primary)' }}>
+            Company System Orders
+          </h1>
+          <p className="text-sm" style={{ color: 'var(--c-text-muted)' }}>
+            View, manage, and override delivery status across Salesman, Distributor, Super Stockist, ASM, and ASE orders
+          </p>
+        </div>
+        <button
+          onClick={() => setIsResetModalOpen(true)}
+          className="self-start sm:self-auto flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/40 transition-all border border-rose-500/30 shrink-0"
+          title="Factory Reset: Delete all orders created so far"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Factory Reset Orders</span>
+        </button>
       </div>
 
       <OrderFilterBar
@@ -162,21 +188,33 @@ export const AllOrders = () => {
                       {formatCurrency(ord.grandTotal)}
                     </td>
                     <td className="p-3 sm:px-4 text-center">
-                      <Badge status={ord.status} />
+                      <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                     </td>
                     <td className="p-3 sm:px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleAdminToggleStatus(ord)}
-                          className={`p-1.5 rounded-lg border transition-colors ${
-                            ord.status === 'Pending'
-                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
-                              : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'
-                          }`}
-                          title={`Override to ${ord.status === 'Pending' ? 'Delivered' : 'Pending'}`}
-                        >
-                          {ord.status === 'Pending' ? <CheckCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
-                        </button>
+                        {ord.status !== 'Cancelled' && (
+                          <button
+                            onClick={() => handleAdminToggleStatus(ord)}
+                            className={`p-1.5 rounded-lg border transition-colors ${
+                              ord.status === 'Pending'
+                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20'
+                                : 'bg-amber-500/10 text-amber-400 border-amber-500/20 hover:bg-amber-500/20'
+                            }`}
+                            title={`Override to ${ord.status === 'Pending' ? 'Delivered' : 'Pending'}`}
+                          >
+                            {ord.status === 'Pending' ? <CheckCircle className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                          </button>
+                        )}
+
+                        {ord.status === 'Pending' && (
+                          <button
+                            onClick={() => handleAdminCancel(ord)}
+                            className="p-1.5 rounded-lg border bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20 transition-colors"
+                            title="Cancel Order as Admin"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        )}
 
                         <button
                           onClick={() => setSelectedOrder(ord)}
@@ -204,6 +242,12 @@ export const AllOrders = () => {
         onClose={() => setSelectedOrder(null)}
         order={selectedOrder}
         onStatusChanged={fetchOrders}
+      />
+
+      <FactoryResetModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onSuccess={fetchOrders}
       />
     </div>
   );

@@ -1,6 +1,16 @@
 import React from 'react';
 
-export const Badge = ({ status }) => {
+export const Badge = ({ status, cancelledByRole }) => {
+  if (status === 'Cancelled') {
+    const isAdmin = cancelledByRole === 'Admin';
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+        {isAdmin ? 'Cancelled by an admin' : 'Cancelled'}
+      </span>
+    );
+  }
+
   if (status === 'Delivered') {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">

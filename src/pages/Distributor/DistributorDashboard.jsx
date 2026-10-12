@@ -124,7 +124,7 @@ export const DistributorDashboard = () => {
                           {formatCurrency(ord.grandTotal)}
                         </td>
                         <td className="p-3 sm:px-4 text-center">
-                          <Badge status={ord.status} />
+                          <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                         </td>
                         <td className="p-3 sm:px-4 text-right">
                           <button

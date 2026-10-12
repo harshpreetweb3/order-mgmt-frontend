@@ -31,13 +31,20 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
-  const login = async (email, password) => {
-    const data = await api.post('/auth/login', { email, password });
+  const login = async (identifier, password) => {
+    const data = await api.post('/auth/login', {
+      identifier,
+      email: identifier,
+      username: identifier,
+      password,
+    });
     localStorage.setItem('orderflow_token', data.token);
     const userInfo = {
       _id: data._id,
       name: data.name,
       email: data.email,
+      username: data.username || '',
+      phone: data.phone || '',
       role: data.role,
       status: data.status,
       distributorId: data.distributorId,

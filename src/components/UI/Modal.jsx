@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { X } from 'lucide-react';
 
-export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl' }) => {
+export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl', zIndex = 'z-50' }) => {
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Escape') onClose();
@@ -20,7 +20,7 @@ export const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-2xl'
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-md animate-fade-in overflow-y-auto"
+      className={`fixed inset-0 ${zIndex} flex items-center justify-center p-4 backdrop-blur-md animate-fade-in overflow-y-auto`}
       style={{ backgroundColor: 'var(--c-overlay)' }}
       onClick={onClose}
     >

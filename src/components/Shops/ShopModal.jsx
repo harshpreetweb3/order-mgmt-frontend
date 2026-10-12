@@ -3,7 +3,7 @@ import { Modal } from '../UI/Modal';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 
-export const ShopModal = ({ isOpen, onClose, onShopSaved, initialData = null }) => {
+export const ShopModal = ({ isOpen, onClose, onShopSaved, initialData = null, zIndex = 'z-50' }) => {
   const { showSuccess, showError } = useToast();
   const [name, setName] = useState('');
   const [ownerName, setOwnerName] = useState('');
@@ -44,15 +44,16 @@ export const ShopModal = ({ isOpen, onClose, onShopSaved, initialData = null }) 
         address: address.trim(),
       };
 
+      let savedShop = null;
       if (initialData) {
-        await api.put(`/shops/${initialData._id}`, payload);
+        savedShop = await api.put(`/shops/${initialData._id}`, payload);
         showSuccess('Shop updated successfully');
       } else {
-        await api.post('/shops', payload);
+        savedShop = await api.post('/shops', payload);
         showSuccess('New Shop added successfully');
       }
 
-      onShopSaved();
+      if (onShopSaved) onShopSaved(savedShop);
       onClose();
     } catch (err) {
       showError(err.message || 'Failed to save shop');
@@ -66,6 +67,7 @@ export const ShopModal = ({ isOpen, onClose, onShopSaved, initialData = null }) 
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? `Edit Shop: ${initialData.name}` : 'Add New Retail Shop'}
+      zIndex={zIndex}
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>

@@ -5,15 +5,20 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { CheckCircle, Clock, Printer, Store, UserCheck, ShieldCheck, Trash2, Edit3 } from 'lucide-react';
+import { CheckCircle, Clock, Printer, Store, UserCheck, ShieldCheck, Trash2, Edit3, XCircle, Ban } from 'lucide-react';
 
 export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) => {
   const { user } = useAuth();
   const { showSuccess, showError } = useToast();
   const [updating, setUpdating] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
   const [editableProducts, setEditableProducts] = useState([]);
 
   useEffect(() => {
+    setShowCancelConfirm(false);
+    setCancelReason('');
     if (order && order.products) {
       setEditableProducts(
         order.products.map((p) => ({
@@ -31,6 +36,15 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
 
   const isRecipient =
     order.orderTo?._id === user._id || order.orderTo === user._id;
+
+  const isCreator =
+    (order.createdBy?._id && order.createdBy._id === user._id) ||
+    order.createdBy === user._id;
+
+  const isAdmin = user.role === 'Admin';
+
+  const canCancel = (isAdmin || isCreator) && order.status === 'Pending';
+  const canDelete = (isAdmin || isCreator) && order.status !== 'Delivered';
 
   const canMarkDelivered =
     (user.role === 'Admin' && order.status === 'Pending') ||
@@ -85,6 +99,39 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
     }
   };
 
+  const handleCancelOrder = async () => {
+    setCancelling(true);
+    try {
+      await api.put(`/orders/${order._id}/cancel`, {
+        reason: cancelReason,
+      });
+      showSuccess(
+        isAdmin
+          ? `Order #${order.orderNumber} cancelled by admin.`
+          : `Order #${order.orderNumber} cancelled successfully.`
+      );
+      if (onStatusChanged) onStatusChanged();
+      setShowCancelConfirm(false);
+      onClose();
+    } catch (err) {
+      showError(err.message || 'Failed to cancel order');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    if (!window.confirm(`Are you sure you want to permanently delete Order #${order.orderNumber}?`)) return;
+    try {
+      await api.delete(`/orders/${order._id}`);
+      showSuccess(`Order #${order.orderNumber} deleted successfully`);
+      if (onStatusChanged) onStatusChanged();
+      onClose();
+    } catch (err) {
+      showError(err.message || 'Failed to delete order');
+    }
+  };
+
   const handlePrint = () => {
     window.print();
   };
@@ -115,7 +162,7 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
             <span className="text-xs font-semibold block mb-1" style={{ color: 'var(--c-text-muted)' }}>
               Status
             </span>
-            <Badge status={order.status} />
+            <Badge status={order.status} cancelledByRole={order.cancelledByRole} />
           </div>
 
           <div>
@@ -137,7 +184,41 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
               </span>
             </div>
           )}
+
+          {order.cancelledAt && (
+            <div>
+              <span className="text-xs font-semibold block mb-1" style={{ color: 'var(--c-text-muted)' }}>
+                Cancelled At
+              </span>
+              <span className="text-sm font-medium text-rose-400">
+                {formatDate(order.cancelledAt)}
+              </span>
+            </div>
+          )}
         </div>
+
+        {/* Cancelled Alert Box */}
+        {order.status === 'Cancelled' && (
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-rose-500/10 border border-rose-500/25 text-rose-400">
+            <XCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-400" />
+            <div className="space-y-1">
+              <p className="text-sm font-bold text-rose-300">
+                {order.cancelledByRole === 'Admin' ? 'Cancelled by an admin' : 'Order Cancelled'}
+              </p>
+              <p className="text-xs text-rose-400/90">
+                {order.cancelledByRole === 'Admin'
+                  ? `This order was cancelled by an Administrator${order.cancelledBy?.name ? ` (${order.cancelledBy.name})` : ''}.`
+                  : `This order was cancelled by its creator${order.cancelledBy?.name ? ` (${order.cancelledBy.name})` : ''}.`}
+                {order.cancelledAt && ` on ${formatDate(order.cancelledAt)}`}
+              </p>
+              {order.cancellationReason && (
+                <p className="text-xs text-slate-300 pt-1">
+                  <span className="font-semibold text-rose-300">Reason:</span> {order.cancellationReason}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Workflow Info Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -285,6 +366,51 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
           </span>
         </div>
 
+        {/* Cancel Confirmation Prompt */}
+        {showCancelConfirm && (
+          <div className="p-4 rounded-xl border border-rose-500/40 bg-rose-500/10 space-y-3">
+            <div className="flex items-center gap-2 text-rose-300 text-xs font-bold">
+              <XCircle className="w-4 h-4 shrink-0" />
+              <span>
+                {isAdmin
+                  ? `Administrative Cancellation: Order #${order.orderNumber}`
+                  : `Cancel Order #${order.orderNumber}?`}
+              </span>
+            </div>
+            <p className="text-xs text-slate-300">
+              {isAdmin
+                ? 'As Admin, cancelling this order will mark it as "Cancelled by an admin" across the entire system. This action cannot be undone.'
+                : 'Cancelling this order will stop processing and notify recipient. This action cannot be undone.'}
+            </p>
+            <input
+              type="text"
+              placeholder="Reason for cancellation (optional)..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="w-full px-3 py-1.5 text-xs rounded-lg border outline-none focus:border-rose-500"
+              style={inputStyle}
+            />
+            <div className="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowCancelConfirm(false)}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                style={{ backgroundColor: 'var(--c-bg-elevated)', color: 'var(--c-text-secondary)' }}
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                disabled={cancelling}
+                onClick={handleCancelOrder}
+                className="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 transition-colors shadow-sm disabled:opacity-50"
+              >
+                {cancelling ? 'Cancelling...' : isAdmin ? 'Confirm Cancel as Admin' : 'Confirm Cancellation'}
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Actions Footer */}
         <div className="flex items-center justify-between pt-2">
           <button
@@ -300,6 +426,27 @@ export const OrderDetailModal = ({ isOpen, onClose, order, onStatusChanged }) =>
           </button>
 
           <div className="flex items-center gap-3">
+            {canCancel && !showCancelConfirm && (
+              <button
+                type="button"
+                onClick={() => setShowCancelConfirm(true)}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all shadow-sm"
+              >
+                <XCircle className="w-4 h-4" />
+                <span>Cancel Order</span>
+              </button>
+            )}
+
+            {canDelete && !showCancelConfirm && (
+              <button
+                type="button"
+                onClick={handleDeleteOrder}
+                className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 transition-all shadow-sm"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Delete Order</span>
+              </button>
+            )}
             {canMarkDelivered && (
               <button
                 onClick={handleToggleDelivery}

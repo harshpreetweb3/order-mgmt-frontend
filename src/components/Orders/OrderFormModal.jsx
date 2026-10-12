@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { Modal } from '../UI/Modal';
+import { ShopModal } from '../Shops/ShopModal';
 import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { api } from '../../services/api';
 import { formatCurrency } from '../../utils/formatters';
 import { calculateRolePrice } from '../../utils/pricing';
-import { Plus, Trash2, ShoppingCart, Store, UserCheck } from 'lucide-react';
+import { Plus, Trash2, ShoppingCart, Store, UserCheck, XCircle } from 'lucide-react';
 
 export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = null }) => {
   const { user } = useAuth();
@@ -15,6 +16,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
   const [recipientUsers, setRecipientUsers] = useState([]);
   const [shopsList, setShopsList] = useState([]);
   const [shopId, setShopId] = useState('');
+  const [isShopModalOpen, setIsShopModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -46,6 +48,11 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
           if (shops.length > 0 && !initialData) {
             setShopId(shops[0]._id);
             setOrderFrom(shops[0].name);
+          } else if (initialData && !initialData.shopId && initialData.orderFrom) {
+            const matched = shops.find((s) => s.name.toLowerCase() === initialData.orderFrom.toLowerCase());
+            if (matched) {
+              setShopId(matched._id);
+            }
           }
         } else if (user.role === 'Distributor' || user.role === 'ASM') {
           const superStockists = await api.get('/users?role=Super Stockist');
@@ -132,6 +139,27 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
     setProducts(updated);
   };
 
+  const handleShopCreated = (newShop) => {
+    if (newShop && newShop._id) {
+      setShopsList((prev) => {
+        const exists = prev.some((s) => s._id === newShop._id);
+        return exists ? prev : [newShop, ...prev];
+      });
+      setShopId(newShop._id);
+      setOrderFrom(newShop.name);
+    } else {
+      api.get('/shops').then((shops) => {
+        setShopsList(shops);
+        if (shops.length > 0) {
+          const latest = shops[shops.length - 1];
+          setShopId(latest._id);
+          setOrderFrom(latest.name);
+        }
+      });
+    }
+    setIsShopModalOpen(false);
+  };
+
   const addProductRow = () => {
     const defaultItem = itemsMaster[0];
     const price = defaultItem ? calculateRolePrice(defaultItem.price, user.role) : 0;
@@ -153,11 +181,37 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
 
   const grandTotal = products.reduce((acc, curr) => acc + (curr.total || 0), 0);
 
+  const handleCancelInitialOrder = async () => {
+    if (!initialData) return;
+    if (!window.confirm(`Are you sure you want to cancel Order #${initialData.orderNumber}?`)) return;
+    try {
+      await api.put(`/orders/${initialData._id}/cancel`, {});
+      showSuccess(`Order #${initialData.orderNumber} cancelled successfully`);
+      if (onOrderSaved) onOrderSaved();
+      onClose();
+    } catch (err) {
+      showError(err.message || 'Failed to cancel order');
+    }
+  };
+
+  const handleDeleteInitialOrder = async () => {
+    if (!initialData) return;
+    if (!window.confirm(`Are you sure you want to delete Order #${initialData.orderNumber}?`)) return;
+    try {
+      await api.delete(`/orders/${initialData._id}`);
+      showSuccess(`Order #${initialData.orderNumber} deleted successfully`);
+      if (onOrderSaved) onOrderSaved();
+      onClose();
+    } catch (err) {
+      showError(err.message || 'Failed to delete order');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (user.role === 'Salesman' && !orderFrom.trim()) {
-      showError('Shop Name (Order From) is required');
+    if (user.role === 'Salesman' && !shopId) {
+      showError('Please select a registered retail shop. Click "+ Add New Shop" to add one.');
       return;
     }
 
@@ -201,7 +255,8 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
   };
 
   return (
-    <Modal
+    <>
+      <Modal
       isOpen={isOpen}
       onClose={onClose}
       title={initialData ? `Edit Order #${initialData.orderNumber}` : 'Create New Order'}
@@ -348,50 +403,63 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
             {/* Shop Selection — shown for Salesman role */}
             {user.role === 'Salesman' && (
               <div className="sm:col-span-2">
-                <label
-                  className="block text-xs font-semibold mb-1 flex items-center gap-1.5"
-                  style={{ color: 'var(--c-text-muted)' }}
-                >
-                  <Store className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Order From (Select Retail Shop) *</span>
-                </label>
-                {shopsList.length > 0 ? (
-                  <select
-                    value={shopId}
-                    onChange={(e) => {
-                      const selected = shopsList.find((s) => s._id === e.target.value);
-                      setShopId(e.target.value);
-                      if (selected) setOrderFrom(selected.name);
-                    }}
-                    required
-                    className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500"
-                    style={{
-                      backgroundColor: 'var(--c-bg-input)',
-                      borderColor: 'var(--c-border)',
-                      color: 'var(--c-text-primary)',
-                    }}
+                <div className="flex items-center justify-between mb-1.5">
+                  <label
+                    className="text-xs font-semibold flex items-center gap-1.5"
+                    style={{ color: 'var(--c-text-muted)' }}
                   >
-                    <option value="">-- Select Retail Shop --</option>
-                    {shopsList.map((s) => (
-                      <option key={s._id} value={s._id}>
-                        {s.name} {s.ownerName ? `(${s.ownerName})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <input
-                    type="text"
-                    value={orderFrom}
-                    onChange={(e) => setOrderFrom(e.target.value)}
-                    placeholder="Enter Shop Name (e.g. Apex Supermarket)"
-                    required
-                    className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500"
-                    style={{
-                      backgroundColor: 'var(--c-bg-input)',
-                      borderColor: 'var(--c-border)',
-                      color: 'var(--c-text-primary)',
-                    }}
-                  />
+                    <Store className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Order From (Select Retail Shop) *</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsShopModalOpen(true)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold rounded-lg border border-emerald-500/30 text-emerald-400 bg-emerald-500/10 hover:bg-emerald-500/20 transition-all shadow-sm"
+                  >
+                    <Plus className="w-3 h-3" />
+                    <span>Add New Shop</span>
+                  </button>
+                </div>
+
+                <select
+                  value={shopId}
+                  onChange={(e) => {
+                    const selected = shopsList.find((s) => s._id === e.target.value);
+                    setShopId(e.target.value);
+                    setOrderFrom(selected ? selected.name : '');
+                  }}
+                  required
+                  disabled={shopsList.length === 0}
+                  className="w-full rounded-lg px-3.5 py-2 text-sm border focus:border-sky-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                  style={{
+                    backgroundColor: 'var(--c-bg-input)',
+                    borderColor: 'var(--c-border)',
+                    color: 'var(--c-text-primary)',
+                  }}
+                >
+                  <option value="">
+                    {shopsList.length === 0 ? '-- No retail shops found --' : '-- Select Retail Shop --'}
+                  </option>
+                  {shopsList.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name} {s.ownerName ? `(${s.ownerName})` : ''}
+                    </option>
+                  ))}
+                </select>
+
+                {shopsList.length === 0 && (
+                  <div className="mt-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs flex items-center justify-between">
+                    <span>
+                      No registered retail shops found. Please click <strong>&ldquo;Add New Shop&rdquo;</strong> above to register a shop first.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsShopModalOpen(true)}
+                      className="ml-2 font-bold underline hover:text-amber-300 shrink-0"
+                    >
+                      + Add Shop
+                    </button>
+                  </div>
                 )}
               </div>
             )}
@@ -537,28 +605,63 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
-              style={{
-                backgroundColor: 'var(--c-bg-elevated)',
-                color: 'var(--c-text-secondary)',
-              }}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={submitting}
-              className="px-6 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 transition-all shadow-lg shadow-sky-500/20 disabled:opacity-50"
-            >
-              {submitting ? 'Saving...' : initialData ? 'Update Order' : 'Create Order'}
-            </button>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
+            <div className="flex items-center gap-2">
+              {initialData && initialData.status === 'Pending' && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleCancelInitialOrder}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 transition-all shadow-sm"
+                    title="Cancel this order"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    <span>Cancel Order</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteInitialOrder}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 transition-all shadow-sm"
+                    title="Delete this order"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                    <span>Delete Order</span>
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className="flex items-center gap-3 ml-auto">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors"
+                style={{
+                  backgroundColor: 'var(--c-bg-elevated)',
+                  color: 'var(--c-text-secondary)',
+                }}
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                disabled={submitting}
+                className="px-6 py-2 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 transition-all shadow-lg shadow-sky-500/20 disabled:opacity-50"
+              >
+                {submitting ? 'Saving...' : initialData ? 'Update Order' : 'Create Order'}
+              </button>
+            </div>
           </div>
         </form>
       )}
     </Modal>
+
+    <ShopModal
+      isOpen={isShopModalOpen}
+      onClose={() => setIsShopModalOpen(false)}
+      onShopSaved={handleShopCreated}
+      zIndex="z-[60]"
+    />
+  </>
   );
 };

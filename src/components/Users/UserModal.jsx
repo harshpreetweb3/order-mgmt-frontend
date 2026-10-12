@@ -11,7 +11,7 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
   if (user?.role !== 'Admin') return null;
 
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [role, setRole] = useState('Salesman');
   const [status, setStatus] = useState('Active');
@@ -47,7 +47,7 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
 
     if (initialData) {
       setName(initialData.name || '');
-      setEmail(initialData.email || '');
+      setUsername(initialData.username || initialData.email || '');
       setRole(initialData.role || 'Salesman');
       setStatus(initialData.status || 'Active');
       setDistributorId(initialData.distributorId?._id || initialData.distributorId || '');
@@ -58,7 +58,7 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
       setPassword('');
     } else {
       setName('');
-      setEmail('');
+      setUsername('');
       setPassword('');
       setRole('Salesman');
       setStatus('Active');
@@ -77,8 +77,8 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!name.trim() || !email.trim()) {
-      showError('Name and email are required');
+    if (!name.trim() || !username.trim()) {
+      showError('Name and username are required');
       return;
     }
 
@@ -89,9 +89,11 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
 
     setSubmitting(true);
     try {
+      const trimmed = username.trim();
       const payload = {
-        name,
-        email,
+        name: name.trim(),
+        username: trimmed.toLowerCase(),
+        email: trimmed.includes('@') ? trimmed.toLowerCase() : (initialData?.email || undefined),
         role,
         status,
         ...(password ? { password } : {}),
@@ -148,17 +150,20 @@ export const UserModal = ({ isOpen, onClose, onUserSaved, initialData = null }) 
 
         <div>
           <label className="block text-xs font-semibold mb-1" style={{ color: 'var(--c-text-muted)' }}>
-            Email Address *
+            Username *
           </label>
           <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="e.g. ramesh@example.com"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="e.g. salesman01, sales@example.com, or 9876543210"
             required
             className="w-full border rounded-xl px-3.5 py-2 text-sm focus:border-sky-500"
             style={inputStyle}
           />
+          <p className="text-[11px] mt-1" style={{ color: 'var(--c-text-muted)' }}>
+            User can use this username, email address, or phone number to sign in.
+          </p>
         </div>
 
         <div>

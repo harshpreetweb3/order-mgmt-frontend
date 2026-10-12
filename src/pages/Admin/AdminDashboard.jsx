@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StatCard } from '../../components/UI/StatCard';
 import { Badge } from '../../components/UI/Badge';
 import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
+import { FactoryResetModal } from '../../components/Orders/FactoryResetModal';
 import { api } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
 import {
@@ -14,12 +15,14 @@ import {
   Activity,
   Eye,
   UserCheck,
+  RotateCcw,
 } from 'lucide-react';
 
 export const AdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
 
   const fetchStats = async () => {
     setLoading(true);
@@ -39,9 +42,19 @@ export const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-extrabold text-white tracking-tight">Admin System Dashboard</h1>
-        <p className="text-sm text-slate-400">Complete control and real-time monitoring of all supply chain operations</p>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-extrabold text-white tracking-tight">Admin System Dashboard</h1>
+          <p className="text-sm text-slate-400">Complete control and real-time monitoring of all supply chain operations</p>
+        </div>
+        <button
+          onClick={() => setIsResetModalOpen(true)}
+          className="self-start sm:self-auto flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-950/40 transition-all border border-rose-500/30 shrink-0"
+          title="Factory Reset: Delete all orders created so far"
+        >
+          <RotateCcw className="w-4 h-4" />
+          <span>Factory Reset Orders</span>
+        </button>
       </div>
 
       {loading ? (
@@ -119,7 +132,7 @@ export const AdminDashboard = () => {
                         <td className="p-3 text-slate-200">{ord.createdBy?.name || 'User'} ({ord.createdByRole})</td>
                         <td className="p-3 text-right font-bold text-slate-100">{formatCurrency(ord.grandTotal)}</td>
                         <td className="p-3 text-center">
-                          <Badge status={ord.status} />
+                          <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                         </td>
                         <td className="p-3 text-right">
                           <button
@@ -172,6 +185,12 @@ export const AdminDashboard = () => {
         onClose={() => setSelectedOrder(null)}
         order={selectedOrder}
         onStatusChanged={fetchStats}
+      />
+
+      <FactoryResetModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onSuccess={fetchStats}
       />
     </div>
   );

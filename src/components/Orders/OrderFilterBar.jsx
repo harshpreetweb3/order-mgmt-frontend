@@ -65,6 +65,7 @@ export const OrderFilterBar = ({
             <option value="All">All Statuses</option>
             <option value="Pending">Pending (Orange)</option>
             <option value="Delivered">Delivered (Green)</option>
+            <option value="Cancelled">Cancelled (Red)</option>
           </select>
         </div>
 

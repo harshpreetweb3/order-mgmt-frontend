@@ -628,7 +628,7 @@ export const HierarchyOrders = () => {
                           <span className="font-bold text-sm" style={{ color: 'var(--c-text-primary)' }}>
                             {formatCurrency(ord.grandTotal)}
                           </span>
-                          <Badge status={ord.status} />
+                          <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -720,7 +720,7 @@ export const HierarchyOrders = () => {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
-          {['All', 'Pending', 'Delivered'].map((st) => (
+          {['All', 'Pending', 'Delivered', 'Cancelled'].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}

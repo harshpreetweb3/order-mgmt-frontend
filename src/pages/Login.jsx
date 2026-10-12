@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useTheme } from '../context/ThemeContext';
-import { Package, ArrowRight, Lock, Mail, Sun, Moon } from 'lucide-react';
+import { Package, ArrowRight, Lock, Mail, User, Sun, Moon } from 'lucide-react';
 
 export const Login = () => {
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -17,14 +17,14 @@ export const Login = () => {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) {
-      showError('Please enter both email and password');
+    if (!identifier.trim() || !password) {
+      showError('Please enter username and password');
       return;
     }
 
     setSubmitting(true);
     try {
-      const user = await login(email, password);
+      const user = await login(identifier.trim(), password);
       showSuccess(`Welcome back, ${user.name}! Login Successful.`);
 
       // Redirect based on role
@@ -89,15 +89,17 @@ export const Login = () => {
           <form className="space-y-5" onSubmit={handleLoginSubmit}>
             <div>
               <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                <Mail className="w-3.5 h-3.5 text-sky-400" />
-                <span>Email Address / Username</span>
+                <User className="w-3.5 h-3.5 text-sky-400" />
+                <span>Username</span>
               </label>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="e.g. sales@ordermanager.com"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="Enter your username"
+                autoCapitalize="none"
+                autoCorrect="off"
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 transition-colors"
               />
             </div>

@@ -64,7 +64,13 @@ export const UserManagement = () => {
   const filteredUsers = users.filter((u) => {
     if (!search.trim()) return true;
     const s = search.toLowerCase();
-    return u.name.toLowerCase().includes(s) || u.email.toLowerCase().includes(s) || u.role.toLowerCase().includes(s);
+    return (
+      u.name?.toLowerCase().includes(s) ||
+      u.email?.toLowerCase().includes(s) ||
+      u.username?.toLowerCase().includes(s) ||
+      u.phone?.toLowerCase().includes(s) ||
+      u.role?.toLowerCase().includes(s)
+    );
   });
 
   const inputStyle = {
@@ -159,6 +165,7 @@ export const UserManagement = () => {
             <thead style={{ backgroundColor: 'var(--c-bg-elevated)', color: 'var(--c-text-muted)' }}>
               <tr>
                 <th className="p-3 sm:px-4">Name</th>
+                <th className="p-3 sm:px-4">Username / Phone</th>
                 <th className="p-3 sm:px-4">Email</th>
                 <th className="p-3 sm:px-4">Role</th>
                 <th className="p-3 sm:px-4">Assigned Parent</th>
@@ -169,13 +176,13 @@ export const UserManagement = () => {
             <tbody className="divide-y" style={{ borderColor: 'var(--c-border)' }}>
               {loading ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-12">
+                  <td colSpan="7" className="text-center py-12">
                     <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                   </td>
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="text-center py-12" style={{ color: 'var(--c-text-muted)' }}>
+                  <td colSpan="7" className="text-center py-12" style={{ color: 'var(--c-text-muted)' }}>
                     No users match search criteria.
                   </td>
                 </tr>
@@ -183,7 +190,17 @@ export const UserManagement = () => {
                 filteredUsers.map((usr) => (
                   <tr key={usr._id} className="transition-colors hover:bg-slate-800/20">
                     <td className="p-3 sm:px-4 font-bold" style={{ color: 'var(--c-text-primary)' }}>{usr.name}</td>
-                    <td className="p-3 sm:px-4" style={{ color: 'var(--c-text-secondary)' }}>{usr.email}</td>
+                    <td className="p-3 sm:px-4">
+                      {usr.username ? (
+                        <div className="font-semibold text-sky-400">@{usr.username}</div>
+                      ) : (
+                        <span style={{ color: 'var(--c-text-muted)' }}>-</span>
+                      )}
+                      {usr.phone && (
+                        <div className="text-[11px]" style={{ color: 'var(--c-text-muted)' }}>{usr.phone}</div>
+                      )}
+                    </td>
+                    <td className="p-3 sm:px-4" style={{ color: 'var(--c-text-secondary)' }}>{usr.email || '-'}</td>
                     <td className="p-3 sm:px-4">
                       <span className="font-semibold text-sky-400">{usr.role}</span>
                     </td>

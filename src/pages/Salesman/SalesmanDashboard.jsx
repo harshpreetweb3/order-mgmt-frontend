@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { StatCard } from '../../components/UI/StatCard';
 import { Badge } from '../../components/UI/Badge';
 import { OrderFormModal } from '../../components/Orders/OrderFormModal';
 import { OrderDetailModal } from '../../components/Orders/OrderDetailModal';
 import { api } from '../../services/api';
 import { formatCurrency, formatDate } from '../../utils/formatters';
-import { ShoppingBag, Clock, CheckCircle2, Plus, Eye, Edit } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
+import { ShoppingBag, Clock, CheckCircle2, Plus, Eye, Edit, Trash2, XCircle } from 'lucide-react';
 
 export const SalesmanDashboard = () => {
+  const location = useLocation();
+  const { showSuccess, showError } = useToast();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -29,6 +33,35 @@ export const SalesmanDashboard = () => {
   useEffect(() => {
     fetchStats();
   }, []);
+
+  useEffect(() => {
+    if (location.pathname === '/salesman/create-order') {
+      setEditOrder(null);
+      setIsFormOpen(true);
+    }
+  }, [location.pathname]);
+
+  const handleCancel = async (id, orderNumber) => {
+    if (!window.confirm(`Are you sure you want to cancel Order #${orderNumber}?`)) return;
+    try {
+      await api.put(`/orders/${id}/cancel`, {});
+      showSuccess(`Order #${orderNumber} cancelled successfully`);
+      fetchStats();
+    } catch (err) {
+      showError(err.message || 'Failed to cancel order');
+    }
+  };
+
+  const handleDelete = async (id, orderNumber) => {
+    if (!window.confirm(`Are you sure you want to delete Order #${orderNumber}?`)) return;
+    try {
+      await api.delete(`/orders/${id}`);
+      showSuccess(`Order #${orderNumber} deleted successfully`);
+      fetchStats();
+    } catch (err) {
+      showError(err.message || 'Failed to delete order');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -116,7 +149,7 @@ export const SalesmanDashboard = () => {
                           {formatCurrency(ord.grandTotal)}
                         </td>
                         <td className="p-3 sm:px-4 text-center">
-                          <Badge status={ord.status} />
+                          <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                         </td>
                         <td className="p-3 sm:px-4 text-right">
                           <div className="flex items-center justify-end gap-2">
@@ -129,15 +162,35 @@ export const SalesmanDashboard = () => {
                             </button>
 
                             {ord.status === 'Pending' && (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setEditOrder(ord);
+                                    setIsFormOpen(true);
+                                  }}
+                                  className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-colors"
+                                  title="Edit Order"
+                                >
+                                  <Edit className="w-4 h-4" />
+                                </button>
+
+                                <button
+                                  onClick={() => handleCancel(ord._id, ord.orderNumber)}
+                                  className="p-1.5 rounded-lg bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors"
+                                  title="Cancel Order"
+                                >
+                                  <XCircle className="w-4 h-4" />
+                                </button>
+                              </>
+                            )}
+
+                            {ord.status !== 'Delivered' && (
                               <button
-                                onClick={() => {
-                                  setEditOrder(ord);
-                                  setIsFormOpen(true);
-                                }}
-                                className="p-1.5 rounded-lg bg-sky-500/10 text-sky-400 hover:bg-sky-500/20 transition-colors"
-                                title="Edit Order"
+                                onClick={() => handleDelete(ord._id, ord.orderNumber)}
+                                className="p-1.5 rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                                title="Delete Order"
                               >
-                                <Edit className="w-4 h-4" />
+                                <Trash2 className="w-4 h-4" />
                               </button>
                             )}
                           </div>

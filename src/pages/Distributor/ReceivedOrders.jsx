@@ -109,7 +109,7 @@ export const ReceivedOrders = () => {
                       {formatCurrency(ord.grandTotal)}
                     </td>
                     <td className="p-3 sm:px-4 text-center">
-                      <Badge status={ord.status} />
+                      <Badge status={ord.status} cancelledByRole={ord.cancelledByRole} />
                     </td>
                     <td className="p-3 sm:px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
