@@ -41,6 +41,21 @@ export const BrandManagement = () => {
     }
   };
 
+  const handleTogglePriceEdit = async (b) => {
+    try {
+      await api.put(`/brands/${b._id}`, {
+        name: b.name,
+        description: b.description,
+        active: b.active,
+        allowSalesmanPriceEdit: !b.allowSalesmanPriceEdit,
+      });
+      showSuccess(`Price editing for "${b.name}" ${!b.allowSalesmanPriceEdit ? 'enabled' : 'disabled'}`);
+      fetchBrands();
+    } catch (err) {
+      showError(err.message || 'Failed to update brand setting');
+    }
+  };
+
   const filteredBrands = brands.filter(
     (b) =>
       b.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -111,19 +126,20 @@ export const BrandManagement = () => {
                 <th className="p-3 sm:px-4">Brand Name</th>
                 <th className="p-3 sm:px-4">Description</th>
                 <th className="p-3 sm:px-4 text-center">Status</th>
+                <th className="p-3 sm:px-4 text-center">Salesman Price Edit</th>
                 <th className="p-3 sm:px-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y" style={{ borderColor: 'var(--c-border)' }}>
               {loading ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-12">
+                  <td colSpan="5" className="text-center py-12">
                     <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
                   </td>
                 </tr>
               ) : filteredBrands.length === 0 ? (
                 <tr>
-                  <td colSpan="4" className="text-center py-12" style={{ color: 'var(--c-text-muted)' }}>
+                  <td colSpan="5" className="text-center py-12" style={{ color: 'var(--c-text-muted)' }}>
                     No brands found. Click "Add New Brand" to create one.
                   </td>
                 </tr>
@@ -141,6 +157,21 @@ export const BrandManagement = () => {
                     </td>
                     <td className="p-3 sm:px-4 text-center">
                       <Badge status={b.active ? 'Active' : 'Inactive'} />
+                    </td>
+                    <td className="p-3 sm:px-4 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleTogglePriceEdit(b)}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border transition-all ${
+                          b.allowSalesmanPriceEdit
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/20 shadow-sm'
+                            : 'bg-slate-800/40 text-slate-400 border-slate-700/50 hover:bg-slate-800 hover:text-slate-300'
+                        }`}
+                        title="Click to toggle Salesman Price Editing for this brand"
+                      >
+                        <span className={`w-2 h-2 rounded-full ${b.allowSalesmanPriceEdit ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+                        <span>{b.allowSalesmanPriceEdit ? 'Editable' : 'Locked'}</span>
+                      </button>
                     </td>
                     <td className="p-3 sm:px-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">

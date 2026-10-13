@@ -8,6 +8,7 @@ export const BrandModal = ({ isOpen, onClose, onBrandSaved, initialData = null }
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [active, setActive] = useState(true);
+  const [allowSalesmanPriceEdit, setAllowSalesmanPriceEdit] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -17,10 +18,12 @@ export const BrandModal = ({ isOpen, onClose, onBrandSaved, initialData = null }
       setName(initialData.name || '');
       setDescription(initialData.description || '');
       setActive(initialData.active !== undefined ? initialData.active : true);
+      setAllowSalesmanPriceEdit(Boolean(initialData.allowSalesmanPriceEdit));
     } else {
       setName('');
       setDescription('');
       setActive(true);
+      setAllowSalesmanPriceEdit(false);
     }
   }, [isOpen, initialData]);
 
@@ -38,6 +41,7 @@ export const BrandModal = ({ isOpen, onClose, onBrandSaved, initialData = null }
         name: name.trim(),
         description: description.trim(),
         active,
+        allowSalesmanPriceEdit,
       };
 
       if (initialData) {
@@ -118,6 +122,35 @@ export const BrandModal = ({ isOpen, onClose, onBrandSaved, initialData = null }
             <option value="Active">Active</option>
             <option value="Inactive">Inactive</option>
           </select>
+        </div>
+
+        {/* Feature Option: Salesman Price Editable for this Brand */}
+        <div
+          className="p-3.5 rounded-xl border flex items-start justify-between gap-3 transition-colors"
+          style={{
+            backgroundColor: allowSalesmanPriceEdit ? 'rgba(16, 185, 129, 0.08)' : 'var(--c-bg-elevated)',
+            borderColor: allowSalesmanPriceEdit ? 'rgba(16, 185, 129, 0.3)' : 'var(--c-border)',
+          }}
+        >
+          <div className="space-y-1">
+            <label
+              htmlFor="allowSalesmanPriceEdit"
+              className="text-xs font-bold block cursor-pointer"
+              style={{ color: allowSalesmanPriceEdit ? '#34d399' : 'var(--c-text-primary)' }}
+            >
+              Allow Salesman Price Edit
+            </label>
+            <p className="text-[11px] leading-relaxed" style={{ color: 'var(--c-text-muted)' }}>
+              When enabled, salesmen creating orders for retail shops can edit unit prices for products under this brand (useful when prices vary by shop).
+            </p>
+          </div>
+          <input
+            id="allowSalesmanPriceEdit"
+            type="checkbox"
+            checked={allowSalesmanPriceEdit}
+            onChange={(e) => setAllowSalesmanPriceEdit(e.target.checked)}
+            className="w-5 h-5 rounded text-emerald-500 cursor-pointer mt-0.5 shrink-0 focus:ring-emerald-500/30"
+          />
         </div>
 
         <div className="flex items-center justify-end gap-3 pt-4 border-t" style={{ borderColor: 'var(--c-border)' }}>

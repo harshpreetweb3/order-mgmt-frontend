@@ -139,6 +139,26 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
     setProducts(updated);
   };
 
+  const isItemPriceEditable = (itemId) => {
+    if (user?.role !== 'Salesman') return false;
+    const item = itemsMaster.find((i) => i._id === itemId);
+    return Boolean(item?.brandId?.allowSalesmanPriceEdit);
+  };
+
+  const handlePriceChange = (index, rawPrice) => {
+    const updated = [...products];
+    const qty = updated[index].quantity || 1;
+    const numPrice = rawPrice === '' ? '' : Math.max(0, parseFloat(rawPrice) || 0);
+    const validNum = Number(numPrice) || 0;
+
+    updated[index] = {
+      ...updated[index],
+      price: rawPrice,
+      total: Math.round(validNum * qty * 100) / 100,
+    };
+    setProducts(updated);
+  };
+
   const handleShopCreated = (newShop) => {
     if (newShop && newShop._id) {
       setShopsList((prev) => {
@@ -234,6 +254,7 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
         products: products.map((p) => ({
           itemId: p.itemId,
           quantity: p.quantity,
+          price: Number(p.price) || 0,
         })),
       };
 
@@ -549,18 +570,41 @@ export const OrderFormModal = ({ isOpen, onClose, onOrderSaved, initialData = nu
                       className="block text-[11px] mb-1 sm:hidden"
                       style={{ color: 'var(--c-text-muted)' }}
                     >
-                      Price
+                      Price {isItemPriceEditable(prod.itemId) && '(Editable)'}
                     </label>
-                    <div
-                      className="rounded-lg px-2 py-1.5 text-xs text-center font-medium border"
-                      style={{
-                        backgroundColor: 'var(--c-bg-input)',
-                        borderColor: 'var(--c-border)',
-                        color: 'var(--c-text-secondary)',
-                      }}
-                    >
-                      {formatCurrency(prod.price)}
-                    </div>
+                    {isItemPriceEditable(prod.itemId) ? (
+                      <div>
+                        <input
+                          type="number"
+                          step="any"
+                          min="0"
+                          value={prod.price}
+                          onChange={(e) => handlePriceChange(idx, e.target.value)}
+                          required
+                          className="w-full rounded-lg px-2 py-1.5 text-xs text-center font-bold border border-emerald-500/50 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
+                          style={{
+                            backgroundColor: 'var(--c-bg-input)',
+                            color: 'var(--c-text-primary)',
+                          }}
+                          placeholder="0.00"
+                          title="Custom shop price allowed for this brand"
+                        />
+                        <span className="hidden sm:block text-[10px] text-emerald-400 font-semibold text-center mt-0.5">
+                          Editable
+                        </span>
+                      </div>
+                    ) : (
+                      <div
+                        className="rounded-lg px-2 py-1.5 text-xs text-center font-medium border"
+                        style={{
+                          backgroundColor: 'var(--c-bg-input)',
+                          borderColor: 'var(--c-border)',
+                          color: 'var(--c-text-secondary)',
+                        }}
+                      >
+                        {formatCurrency(prod.price)}
+                      </div>
+                    )}
                   </div>
 
                   <div className="col-span-3 sm:col-span-2 text-right">
